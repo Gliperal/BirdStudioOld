@@ -39,30 +39,6 @@ namespace BirdStudio
                     inputEditor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
                 }
             }
-
-            inputEditor.Text = @"#a
-console load 1
-   1
-
-#Start
-#lvl_1
-  88
-  10,R,X
-   7,R,J
-   1,R
-   4,R,K,G
-   1,R
-  16,R,U,X
-   3,R,J,G
-   7,R
-   4,D,X
-   1,R,J
-   6,R
-  13,R,J
-   3,R,K,G
-  15,U,X
-   3,L,J,G
-  40";
             SetColorScheme(ColorScheme.LightMode());
         }
 
@@ -84,9 +60,27 @@ console load 1
             inputEditor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter(inputEditor, cs.activeLine));
         }
 
-        private void ButtonTest_Click(object sender, RoutedEventArgs e)
+        private void Menu_LightMode(object sender, RoutedEventArgs e)
+        {
+            SetColorScheme(ColorScheme.LightMode());
+        }
+
+        private void Menu_DarkMode(object sender, RoutedEventArgs e)
         {
             SetColorScheme(ColorScheme.DarkMode());
+        }
+
+        private void OpenCommand_Execute(object sender, RoutedEventArgs e)
+        {
+            Replay replay = new Replay(@"C:\Program Files (x86)\Steam\steamapps\common\The King's Bird\Replays\Twin Tree Village.txt");
+            List<Press> presses = replay.toPresses();
+            TAS tas = new TAS(presses);
+            inputEditor.Text = string.Join('\n', tas.lines);
+        }
+
+        private void SaveCommand_Execute(object sender, RoutedEventArgs e)
+        {
+            ;
         }
     }
 }

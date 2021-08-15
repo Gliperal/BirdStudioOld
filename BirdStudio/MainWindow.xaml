@@ -6,14 +6,32 @@
         xmlns:local="clr-namespace:BirdStudio"
         mc:Ignorable="d"
         Title="birb" Height="800" Width="300">
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="OpenCommand_Execute" />
+        <CommandBinding Command="Save" Executed="SaveCommand_Execute" />
+    </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Button Grid.Row="1" x:Name="btnTest" Click="ButtonTest_Click">Test</Button>
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Command="Open" />
+                <MenuItem Header="_Save" Command="Save" />
+            </MenuItem>
+            <MenuItem Header="_Bird">
+                <MenuItem Header="Watch from _Start" />
+                <MenuItem Header="_Watch" />
+                <MenuItem Header="Watch to _Cursor" />
+            </MenuItem>
+            <MenuItem Header="_Preferences">
+                <MenuItem Header="_Dark Mode" IsCheckable="True" Checked="Menu_DarkMode" Unchecked="Menu_LightMode" />
+            </MenuItem>
+        </Menu>
         <avalonEdit:TextEditor
+            Grid.Row="1"
             Padding="10,0,0,0"
             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
             Name="inputEditor"
