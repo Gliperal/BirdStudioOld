@@ -21,10 +21,12 @@ namespace BirdStudio
     public class LineHighlighter : IBackgroundRenderer
     {
         private TextEditor _editor;
+        private Brush _brush;
 
-        public LineHighlighter(TextEditor editor)
+        public LineHighlighter(TextEditor editor, Brush brush)
         {
             _editor = editor;
+            _brush = brush;
         }
 
         public KnownLayer Layer
@@ -52,8 +54,8 @@ namespace BirdStudio
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine))
             {
                 drawingContext.DrawRectangle(
-                    new SolidColorBrush(Color.FromArgb(0x40, 0, 0, 0xFF)), null,
-                    new Rect(rect.Location, new Size(textView.ActualWidth - 32, rect.Height)));
+                    _brush, null,
+                    new Rect(rect.Location, new Size(textView.ActualWidth, rect.Height)));
             }
 
             //VisualLine line = textView.VisualLines[9];

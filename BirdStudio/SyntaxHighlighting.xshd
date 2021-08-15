@@ -1,7 +1,7 @@
 ﻿<SyntaxDefinition xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
-	<Color name="Comment" foreground="#18A32C" />
-	<Color name="Frame" foreground="#DE6140" />
-	<Color name="Input" foreground="#0AA1E3" />
+	<Color name="Comment" foreground="#008000" />
+	<Color name="Frame" foreground="#FF0000" />
+	<Color name="Input" foreground="#0000FF" />
 
 	<RuleSet>
 		<Span color="Comment" begin="#" />

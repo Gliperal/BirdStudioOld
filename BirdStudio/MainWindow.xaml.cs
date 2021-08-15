@@ -40,8 +40,6 @@ namespace BirdStudio
                 }
             }
 
-            inputEditor.Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180));
-            inputEditor.Background = new SolidColorBrush(Color.FromRgb(26, 26, 26));
             inputEditor.Text = @"#a
 console load 1
    1
@@ -65,16 +63,30 @@ console load 1
   15,U,X
    3,L,J,G
   40";
+            SetColorScheme(ColorScheme.LightMode());
+        }
+
+        private void SetColorScheme(ColorScheme cs)
+        {
+            inputEditor.Background = cs.background;
+            inputEditor.Foreground = cs.defaultText;
+
+            var highlighting = inputEditor.SyntaxHighlighting;
+            var commentHighlighting = highlighting.NamedHighlightingColors.First(c => c.Name == "Comment");
+            commentHighlighting.Foreground = cs.comment;
+            var frameHighlighting = highlighting.NamedHighlightingColors.First(c => c.Name == "Frame");
+            frameHighlighting.Foreground = cs.frame;
+            var inputHighlighting = highlighting.NamedHighlightingColors.First(c => c.Name == "Input");
+            inputHighlighting.Foreground = cs.input;
+            inputEditor.SyntaxHighlighting = highlighting;
+
+            inputEditor.TextArea.TextView.BackgroundRenderers.Clear();
+            inputEditor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter(inputEditor, cs.activeLine));
         }
 
         private void ButtonTest_Click(object sender, RoutedEventArgs e)
         {
-            inputEditor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter(inputEditor));
-
-            var highlighting = inputEditor.SyntaxHighlighting;
-            var commentHighlighting = highlighting.NamedHighlightingColors.First(c => c.Name == "Comment");
-            commentHighlighting.Foreground = new SimpleHighlightingBrush(Color.FromRgb(0xC0, 0xC0, 0xC0));
-            inputEditor.SyntaxHighlighting = highlighting;
+            SetColorScheme(ColorScheme.DarkMode());
         }
     }
 }

@@ -5,15 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BirdStudio"
         mc:Ignorable="d"
-        Title="birb" Height="900" Width="400">
-    <StackPanel>
-        <Button x:Name="btnTest" Click="ButtonTest_Click">Test</Button>
+        Title="birb" Height="800" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Button Grid.Row="1" x:Name="btnTest" Click="ButtonTest_Click">Test</Button>
         <avalonEdit:TextEditor
+            Padding="10,0,0,0"
             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
             Name="inputEditor"
             FontFamily="Consolas"
             FontSize="14pt"
             ShowLineNumbers="True"
         />
-    </StackPanel>
+    </Grid>
 </Window>
