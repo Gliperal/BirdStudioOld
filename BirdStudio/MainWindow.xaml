@@ -14,7 +14,6 @@
             FontFamily="Consolas"
             FontSize="14pt"
             ShowLineNumbers="True"
-            SyntaxHighlighting="C#"
         />
     </StackPanel>
 </Window>
