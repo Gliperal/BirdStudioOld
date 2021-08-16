@@ -80,6 +80,14 @@ namespace BirdStudio
 
         private void SaveCommand_Execute(object sender, RoutedEventArgs e)
         {
+            TAS tas = new TAS(inputEditor.Text.Split('\n').ToList());
+            List<Press> presses = tas.toPresses();
+            Replay replay = new Replay(presses);
+            replay.writeFile(@"C:\Program Files (x86)\Steam\steamapps\common\The King's Bird\Replays\Twin Tree Village Rewrite.txt");
+        }
+
+        private void WatchFromStart_Execute(object sender, RoutedEventArgs e)
+        {
             ;
         }
     }
