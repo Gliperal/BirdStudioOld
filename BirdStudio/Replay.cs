@@ -58,8 +58,9 @@ namespace BirdStudio
         }
 
         private string[] TYPES = {" J", " X", " G", " C", " Q", " RL", " UD"};
-        public Replay(List<Press> presses)
+        public Replay(List<Press> presses, int _breakpoint)
         {
+            breakpoint = _breakpoint;
             inputsByType = new Dictionary<string, List<ReplayInput>>();
             foreach (string type in TYPES)
             {

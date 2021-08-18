@@ -59,6 +59,13 @@ namespace BirdStudio
             return String.Format("{0,4},{1}", frames, buttonsStr);
         }
 
+        private bool _isInputLine(string line)
+        {
+            if (line == "" || line.StartsWith('#') || line.StartsWith("stage "))
+                return false;
+            return true;
+        }
+
         public List<Press> toPresses()
         {
             List<Press> presses = new List<Press>();
@@ -67,14 +74,13 @@ namespace BirdStudio
             foreach (string l in lines)
             {
                 string line = l.Trim();
-                if (l == "" || l.StartsWith('#') || l.StartsWith("stage "))
+                if (!_isInputLine(line))
                     continue;
                 int frames;
                 string buttons;
                 if (line.Contains(','))
                 {
                     string[] s = line.Split(',', 2);
-                    Console.WriteLine(s);
                     frames = Int32.Parse(s[0]);
                     buttons = string.Join("", s[1].ToUpper().Split(','));
                 }
@@ -108,6 +114,22 @@ namespace BirdStudio
                 frame += frames;
             }
             return presses;
+        }
+
+        public int startingFrameForLine(int lineNumber)
+        {
+            if (lineNumber >= lines.Count())
+                return -1;
+            int frame = 0;
+            for (int i = 0; i < lineNumber; i++)
+            {
+                string line = lines[i].Trim();
+                if (!_isInputLine(line))
+                    continue;
+                string[] s = line.Split(',');
+                frame += Int32.Parse(s[0]);
+            }
+            return frame;
         }
     }
 }

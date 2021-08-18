@@ -27,9 +27,9 @@ namespace BirdStudio
     /// </summary>
     public partial class MainWindow : Window
     {
+        private TAS tas;
         private string tasFile;
         private string gameDirectory = @"C:\Program Files (x86)\Steam\steamapps\common\The King's Bird\";
-        //private TAS tas;
 
         public MainWindow()
         {
@@ -75,6 +75,12 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.DarkMode());
         }
 
+        private void Editor_TextChanged(object sender, System.EventArgs e)
+        {
+            tas = new TAS(inputEditor.Text.Split('\n').ToList());
+            // inputEditor.Document.Text = string.Join('\n', tas.lines);
+        }
+
         private string filePathToNameOnly(string path)
         {
             string name = path.Split('\\').Last();
@@ -99,7 +105,6 @@ namespace BirdStudio
                     return;
             }
 
-            TAS tas;
             if (file.EndsWith(".tas"))
             {
                 // tas file
@@ -117,6 +122,8 @@ namespace BirdStudio
                 tasFile = null;
             }
             inputEditor.Text = string.Join('\n', tas.lines);
+            // TODO this is sloppy
+            // it will cause TextChanged to fire, creating a 2nd TAS object for no reason
         }
 
         private void _saveAs(string file)
@@ -147,16 +154,24 @@ namespace BirdStudio
 
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            TAS tas = new TAS(inputEditor.Text.Split('\n').ToList());
             e.CanExecute = tas.stage != null;
+        }
+
+        private void _watch(int breakpoint)
+        {
+            List<Press> presses = tas.toPresses();
+            Replay replay = new Replay(presses, breakpoint);
+            replay.writeFile(gameDirectory + @"Replays\" + tas.stage + ".txt");
         }
 
         private void WatchFromStart_Execute(object sender, RoutedEventArgs e)
         {
-            TAS tas = new TAS(inputEditor.Text.Split('\n').ToList());
-            List<Press> presses = tas.toPresses();
-            Replay replay = new Replay(presses);
-            replay.writeFile(gameDirectory + @"Replays\" + tas.stage + ".txt");
+            _watch(0);
+        }
+
+        private void WatchToCursor_Execute(object sender, RoutedEventArgs e)
+        {
+            _watch(tas.startingFrameForLine(inputEditor.TextArea.Caret.Line - 1));
         }
     }
 }

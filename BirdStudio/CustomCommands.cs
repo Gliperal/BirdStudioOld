@@ -14,6 +14,16 @@ namespace BirdStudio.Commands
             }
         );
 
+        public static RoutedUICommand WatchToCursor = new RoutedUICommand(
+            "Watch to Cursor",
+            "WatchToCursor",
+            typeof(CustomCommands),
+            new InputGestureCollection()
+            {
+                new KeyGesture(Key.Q, ModifierKeys.Control)
+            }
+        );
+
         public static RoutedUICommand ToggleDarkMode = new RoutedUICommand(
             "Toggle Dark Mode",
             "ToggleDarkMode",

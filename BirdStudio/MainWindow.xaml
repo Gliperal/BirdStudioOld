@@ -16,6 +16,11 @@
             Executed="WatchFromStart_Execute"
             CanExecute="WatchFromStart_CanExecute"
         />
+        <CommandBinding
+            Command="commands:CustomCommands.WatchToCursor"
+            Executed="WatchToCursor_Execute"
+            CanExecute="WatchFromStart_CanExecute"
+        />
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -31,8 +36,7 @@
             </MenuItem>
             <MenuItem Header="_Bird">
                 <MenuItem Header="Watch from _Start" Command="commands:CustomCommands.WatchFromStart" />
-                <MenuItem Header="_Watch" />
-                <MenuItem Header="Watch to _Cursor" />
+                <MenuItem Header="Watch to _Cursor" Command="commands:CustomCommands.WatchToCursor" />
             </MenuItem>
             <MenuItem Header="_Preferences">
                 <MenuItem Header="_Dark Mode" IsCheckable="True" Checked="Menu_DarkMode" Unchecked="Menu_LightMode" />
@@ -46,6 +50,7 @@
             FontFamily="Consolas"
             FontSize="14pt"
             ShowLineNumbers="True"
+            TextChanged="Editor_TextChanged"
         />
     </Grid>
 </Window>
