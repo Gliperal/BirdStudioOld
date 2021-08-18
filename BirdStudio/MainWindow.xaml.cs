@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 using System.IO;
 using System.Reflection;
@@ -27,9 +28,9 @@ namespace BirdStudio
     /// </summary>
     public partial class MainWindow : Window
     {
-        private TAS tas;
+        private string gameDirectory;
         private string tasFile;
-        private string gameDirectory = @"C:\Program Files (x86)\Steam\steamapps\common\The King's Bird\";
+        private TAS tas;
 
         public MainWindow()
         {
@@ -45,6 +46,21 @@ namespace BirdStudio
                 }
             }
             SetColorScheme(ColorScheme.LightMode());
+        }
+
+        private void AttemptProcessConnection()
+        {
+            try
+            {
+                Process[] processes = Process.GetProcessesByName("TheKingsBird");
+                string path = processes.First().MainModule.FileName;
+                int i = path.LastIndexOf('\\');
+                gameDirectory = path.Substring(0, i + 1);
+            }
+            catch
+            {
+                gameDirectory = null;
+            }
         }
 
         private void SetColorScheme(ColorScheme cs)
@@ -96,7 +112,10 @@ namespace BirdStudio
             string file;
             using (OpenFileDialog openFileDialogue = new OpenFileDialog())
             {
-                openFileDialogue.InitialDirectory = @"C:\Program Files (x86)\Steam\steamapps\common\The King's Bird\Replays\";
+                if (gameDirectory != null && File.Exists(gameDirectory + @"Replays\"))
+                    openFileDialogue.InitialDirectory = gameDirectory + @"Replays\";
+                else if (gameDirectory != null)
+                    openFileDialogue.InitialDirectory = gameDirectory;
                 openFileDialogue.Filter = "TAS files (*.tas)|*.tas|Replay files (*.txt)|*.txt|All files (*.*)|*.*";
                 openFileDialogue.RestoreDirectory = true;
                 if (openFileDialogue.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -154,13 +173,25 @@ namespace BirdStudio
 
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = tas.stage != null;
+            AttemptProcessConnection();
+            e.CanExecute =
+                (gameDirectory != null) &&
+                (tas != null) &&
+                (tas.stage != null);
         }
 
         private void _watch(int breakpoint)
         {
             List<Press> presses = tas.toPresses();
             Replay replay = new Replay(presses, breakpoint);
+            try
+            {
+                Directory.CreateDirectory(gameDirectory + @"Replays\");
+            }
+            catch
+            {
+                System.Windows.Forms.MessageBox.Show("Unable to create directory '" + gameDirectory + @"Replays\'");
+            }
             replay.writeFile(gameDirectory + @"Replays\" + tas.stage + ".txt");
         }
 
