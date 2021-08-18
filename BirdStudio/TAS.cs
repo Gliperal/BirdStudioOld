@@ -9,15 +9,25 @@ namespace BirdStudio
     public class TAS
     {
         public List<string> lines { get; }
+        public string stage { get; }
 
         public TAS(List<string> _lines)
         {
             lines = _lines;
+            foreach (string l in lines)
+            {
+                string line = l.Trim();
+                if (line.StartsWith("stage "))
+                    stage = line.Substring(6);
+            }
         }
 
-        public TAS(List<Press> presses)
+        public TAS(List<Press> presses, string _stage)
         {
             lines = new List<string>();
+            stage = _stage;
+            lines.Add("stage " + _stage);
+            lines.Add("");
             presses.Sort(Press.compareFrames);
             HashSet<char> state = new HashSet<char>();
             int frame = 0;
@@ -57,7 +67,7 @@ namespace BirdStudio
             foreach (string l in lines)
             {
                 string line = l.Trim();
-                if (l.StartsWith('#'))
+                if (l == "" || l.StartsWith('#') || l.StartsWith("stage "))
                     continue;
                 int frames;
                 string buttons;

@@ -1,9 +1,14 @@
 ﻿<SyntaxDefinition xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+	<Color name="Command" foreground="#B010B0" />
 	<Color name="Comment" foreground="#008000" />
 	<Color name="Frame" foreground="#FF0000" />
 	<Color name="Input" foreground="#0000FF" />
 
 	<RuleSet>
+		<Keywords color="Command">
+			<Word>stage</Word>
+		</Keywords>
+
 		<Span color="Comment" begin="#" />
 
 		<Rule color="Frame">

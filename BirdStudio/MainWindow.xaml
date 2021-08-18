@@ -10,7 +10,12 @@
     <Window.CommandBindings>
         <CommandBinding Command="Open" Executed="OpenCommand_Execute" />
         <CommandBinding Command="Save" Executed="SaveCommand_Execute" />
-        <CommandBinding Command="commands:CustomCommands.WatchFromStart" Executed="WatchFromStart_Execute" />
+        <CommandBinding Command="SaveAs" Executed="SaveAsCommand_Execute" />
+        <CommandBinding
+            Command="commands:CustomCommands.WatchFromStart"
+            Executed="WatchFromStart_Execute"
+            CanExecute="WatchFromStart_CanExecute"
+        />
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -22,6 +27,7 @@
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Command="Open" />
                 <MenuItem Header="_Save" Command="Save" />
+                <MenuItem Header="Save _As" Command="SaveAs" />
             </MenuItem>
             <MenuItem Header="_Bird">
                 <MenuItem Header="Watch from _Start" Command="commands:CustomCommands.WatchFromStart" />

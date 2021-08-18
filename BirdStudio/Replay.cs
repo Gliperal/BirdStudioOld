@@ -72,8 +72,20 @@ namespace BirdStudio
                         inputs.Add(new ReplayInput
                         {
                             frame = press.frame,
-                            buttonID = buttonID
+                            buttonID = press.on ? buttonID : 0
                         });
+                    // merge two inputs on the same frame (e.g. L off, R on)
+                    if (inputs.Count < 2)
+                        continue;
+                    ReplayInput prev = inputs[inputs.Count - 2];
+                    ReplayInput current = inputs[inputs.Count - 1];
+                    if (prev.frame == current.frame)
+                    {
+                        if (prev.buttonID == 0)
+                            inputs.RemoveAt(inputs.Count - 2);
+                        else if (current.buttonID == 0)
+                            inputs.RemoveAt(inputs.Count - 1);
+                    }
                 }
                 inputsByType[type] = inputs;
             }
@@ -87,12 +99,14 @@ namespace BirdStudio
                 string buttons = type;
                 foreach (ReplayInput input in inputsByType[type])
                     foreach (char button in buttons.Substring(1))
+                    {
                         presses.Add(new Press
                         {
                             frame = input.frame,
                             button = button,
                             on = button == buttons[input.buttonID]
                         });
+                    }
             }
             return presses;
         }
@@ -102,6 +116,8 @@ namespace BirdStudio
             string result = "";
             foreach (ReplayInput input in inputsByType[type])
                 result += input.frame + "," + input.buttonID + "|";
+            if (!result.StartsWith("0,"))
+                result = "0,0|" + result;
             return result;
         }
 
@@ -128,7 +144,8 @@ namespace BirdStudio
             lines.Add(_writeInputs(" UD"));
             lines.Add("");
             lines.Add(breakpoint.ToString());
-            System.IO.File.WriteAllLines(file, lines.ToArray());
+            string contents = string.Join('\n', lines);
+            System.IO.File.WriteAllText(file, contents);
         }
     }
 }
