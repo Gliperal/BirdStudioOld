@@ -8,7 +8,7 @@ namespace BirdStudio
 {
     public class TAS
     {
-        public List<string> lines { get; }
+        private List<string> lines;
         public string stage { get; }
 
         public TAS(List<string> _lines)
@@ -35,7 +35,7 @@ namespace BirdStudio
             {
                 if (press.frame > frame)
                 {
-                    lines.Add(tasLine(press.frame - frame, state));
+                    lines.Add(_tasLine(press.frame - frame, state));
                     frame = press.frame;
                 }
                 if (press.on)
@@ -43,10 +43,10 @@ namespace BirdStudio
                 else
                     state.Remove(press.button);
             }
-            lines.Add(tasLine(1, state));
+            lines.Add(_tasLine(1, state));
         }
 
-        private static string tasLine(int frames, HashSet<char> buttons)
+        private static string _tasLine(int frames, HashSet<char> buttons)
         {
             if (buttons.Count == 0)
                 return String.Format("{0,4}", frames);
@@ -59,7 +59,12 @@ namespace BirdStudio
             return String.Format("{0,4},{1}", frames, buttonsStr);
         }
 
-        private bool _isInputLine(string line)
+        public string toText()
+        {
+            return string.Join('\n', lines);
+        }
+
+        private static bool _isInputLine(string line)
         {
             if (line == "" || line.StartsWith('#') || line.StartsWith("stage "))
                 return false;
@@ -114,6 +119,37 @@ namespace BirdStudio
                 frame += frames;
             }
             return presses;
+        }
+
+        public void updateInputs(TAS newInputs)
+        {
+            List<string> newLines = new List<string>();
+            List<string> newInputLines = newInputs.lines.Where(line => _isInputLine(line)).ToList();
+            int oldIndex = 0;
+            int newIndex = 0;
+            for (; oldIndex < lines.Count && newIndex < newInputLines.Count ; oldIndex++)
+            {
+                string oldLine = lines[oldIndex];
+                string newLine = newInputLines[newIndex];
+                if (!_isInputLine(oldLine)) // copy comments from old tas
+                    newLines.Add(oldLine);
+                else if (oldLine == newLine) // copy inputs as long as they're the same
+                {
+                    newLines.Add(oldLine);
+                    newIndex++;
+                }
+                else
+                    break;
+            }
+            // as soon as the inputs diverge:
+            // finish copying new inputs
+            for (; newIndex < newInputLines.Count; newIndex++)
+                newLines.Add(newInputLines[newIndex]);
+            // finish copying old comments
+            for (; oldIndex < lines.Count; oldIndex++)
+                if (!_isInputLine(lines[oldIndex]))
+                    newLines.Add(lines[oldIndex]);
+            lines = newLines;
         }
 
         public int startingFrameForLine(int lineNumber)

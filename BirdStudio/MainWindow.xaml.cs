@@ -29,6 +29,8 @@ namespace BirdStudio
     public partial class MainWindow : Window
     {
         private string gameDirectory;
+        private string replayFile;
+        private FileSystemWatcher replayFileWatcher;
         private string tasFile;
         private TAS tas;
 
@@ -61,6 +63,33 @@ namespace BirdStudio
             {
                 gameDirectory = null;
             }
+            UpdateReplayFile();
+        }
+
+        private void UpdateReplayFile()
+        {
+            replayFile = null;
+            if ((gameDirectory == null) ||
+                (tas == null) ||
+                (tas.stage == null))
+            {
+                return;
+            }
+            string replayFolder = gameDirectory + @"Replays\";
+            try
+            {
+                Directory.CreateDirectory(replayFolder);
+            }
+            catch
+            {
+                System.Windows.Forms.MessageBox.Show("Unable to create directory '" + replayFolder + "'");
+            }
+            //FileSystemWatcher watcher = new FileSystemWatcher(replayFolder, tas.stage + ".txt");
+            replayFileWatcher = new FileSystemWatcher(replayFolder, tas.stage + ".txt");
+            replayFileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+            replayFileWatcher.Changed += OnReplayChange;
+            replayFileWatcher.EnableRaisingEvents = true;
+            replayFile = gameDirectory + @"Replays\" + tas.stage + ".txt";
         }
 
         private void SetColorScheme(ColorScheme cs)
@@ -140,9 +169,10 @@ namespace BirdStudio
                 tas = new TAS(presses, stage);
                 tasFile = null;
             }
-            inputEditor.Text = string.Join('\n', tas.lines);
+            inputEditor.Text = string.Join('\n', tas.toText());
             // TODO this is sloppy
             // it will cause TextChanged to fire, creating a 2nd TAS object for no reason
+            UpdateReplayFile();
         }
 
         private void _saveAs(string file)
@@ -171,28 +201,39 @@ namespace BirdStudio
             _saveAs(tasFile);
         }
 
+        private void OnReplayChange(object sender, FileSystemEventArgs e)
+        {
+            Replay replay = null;
+            // Wait for replay file to finish saving
+            while (replay == null)
+            {
+                try
+                {
+                    replay = new Replay(replayFile);
+                }
+                catch (IOException) {}
+            }
+            List<Press> presses = replay.toPresses();
+            TAS newInputs = new TAS(presses, "");
+            App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
+            {
+                tas.updateInputs(newInputs);
+                inputEditor.Text = tas.toText();
+            });
+        }
+
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            AttemptProcessConnection();
-            e.CanExecute =
-                (gameDirectory != null) &&
-                (tas != null) &&
-                (tas.stage != null);
+            if (gameDirectory == null)
+                AttemptProcessConnection();
+            e.CanExecute = (replayFile != null);
         }
 
         private void _watch(int breakpoint)
         {
             List<Press> presses = tas.toPresses();
             Replay replay = new Replay(presses, breakpoint);
-            try
-            {
-                Directory.CreateDirectory(gameDirectory + @"Replays\");
-            }
-            catch
-            {
-                System.Windows.Forms.MessageBox.Show("Unable to create directory '" + gameDirectory + @"Replays\'");
-            }
-            replay.writeFile(gameDirectory + @"Replays\" + tas.stage + ".txt");
+            replay.writeFile(replayFile);
         }
 
         private void WatchFromStart_Execute(object sender, RoutedEventArgs e)
