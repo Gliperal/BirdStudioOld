@@ -14,6 +14,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Threading;
 
 using System.IO;
 using System.Reflection;
@@ -30,7 +32,6 @@ namespace BirdStudio
     {
         private string gameDirectory;
         private string replayFile;
-        private FileSystemWatcher replayFileWatcher;
         private string tasFile;
         private TAS tas;
 
@@ -48,6 +49,50 @@ namespace BirdStudio
                 }
             }
             SetColorScheme(ColorScheme.LightMode());
+            new Thread(new ThreadStart(TalkWithGame)).Start();
+        }
+
+        private void TalkWithGame()
+        {
+            while (true)
+            {
+                Message message = TcpManager.listenForMessage();
+                switch(message.type)
+                {
+                    case "SaveReplay":
+                        string levelName = (string) message.args[0];
+                        string replayBuffer = (string)message.args[1];
+                        int breakpoint = (int) message.args[2]; // TODO do I actually care about this?
+                        OnReplaySaved(levelName, replayBuffer, breakpoint);
+                        break;
+                    case "Frame":
+                        int frame = (int) message.args[0];
+                        float pos_x = (float) message.args[1];
+                        float pos_y = (float) message.args[2];
+                        float vel_x = (float) message.args[3];
+                        float vel_y = (float) message.args[4];
+                        // TODO
+                        break;
+                }
+            }
+        }
+
+        private void OnReplaySaved(string levelName, string replayBuffer, int breakpoint)
+        {
+            if (levelName != tas.stage) // TODO fails if tas is null
+            { } // TODO update to a different level: would you like to open?
+                // no // yes (save current file) // yes (discard changes to current file)
+            Replay replay = new Replay(replayBuffer, breakpoint);
+            List<Press> presses = replay.toPresses();
+            TAS newInputs = new TAS(presses, levelName);
+            App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
+            {
+                if (levelName == tas.stage)
+                    tas.updateInputs(newInputs);
+                else
+                    tas = newInputs;
+                inputEditor.Text = tas.toText();
+            });
         }
 
         private void AttemptProcessConnection()
@@ -84,11 +129,6 @@ namespace BirdStudio
             {
                 System.Windows.Forms.MessageBox.Show("Unable to create directory '" + replayFolder + "'");
             }
-            //FileSystemWatcher watcher = new FileSystemWatcher(replayFolder, tas.stage + ".txt");
-            replayFileWatcher = new FileSystemWatcher(replayFolder, tas.stage + ".txt");
-            replayFileWatcher.NotifyFilter = NotifyFilters.LastWrite;
-            replayFileWatcher.Changed += OnReplayChange;
-            replayFileWatcher.EnableRaisingEvents = true;
             replayFile = gameDirectory + @"Replays\" + tas.stage + ".txt";
         }
 
@@ -201,27 +241,6 @@ namespace BirdStudio
             _saveAs(tasFile);
         }
 
-        private void OnReplayChange(object sender, FileSystemEventArgs e)
-        {
-            Replay replay = null;
-            // Wait for replay file to finish saving
-            while (replay == null)
-            {
-                try
-                {
-                    replay = new Replay(replayFile);
-                }
-                catch (IOException) {}
-            }
-            List<Press> presses = replay.toPresses();
-            TAS newInputs = new TAS(presses, "");
-            App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
-            {
-                tas.updateInputs(newInputs);
-                inputEditor.Text = tas.toText();
-            });
-        }
-
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
             if (gameDirectory == null)
@@ -233,7 +252,8 @@ namespace BirdStudio
         {
             List<Press> presses = tas.toPresses();
             Replay replay = new Replay(presses, breakpoint);
-            replay.writeFile(replayFile);
+            string replayBuffer = replay.writeString();
+            TcpManager.sendLoadReplayCommand(tas.stage, replayBuffer, breakpoint);
         }
 
         private void WatchFromStart_Execute(object sender, RoutedEventArgs e)

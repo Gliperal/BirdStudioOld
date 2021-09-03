@@ -14,10 +14,9 @@ namespace BirdStudio
         private Dictionary<string, List<ReplayInput>> inputsByType;
         private int breakpoint;
 
-        public Replay(string file)
+        private Replay(string[] lines)
         {
             inputsByType = new Dictionary<string, List<ReplayInput>>();
-            string[] lines = System.IO.File.ReadAllLines(file);
             if (lines[0] != "0:") throw new FormatException();
             _loadInputs(" J", lines[1]);
             if (lines[2] != "1:") throw new FormatException();
@@ -36,8 +35,15 @@ namespace BirdStudio
             if (lines[15] != "2:") throw new FormatException();
             // TODO what if user doesn't record replay with dash axis
             if (lines[16] != lines[14]) throw new FormatException();
-            if (lines[17] != "") throw new FormatException();
-            breakpoint = Int32.Parse(lines[18]);
+            if (lines.Length > 17 && lines[17] != "") throw new FormatException();
+            breakpoint = (lines.Length > 18) ? Int32.Parse(lines[18]) : 0;
+        }
+
+        public Replay(string file) : this(System.IO.File.ReadAllLines(file)) {}
+
+        public Replay(string buffer, int breakpoint) : this(buffer.Split('\n'))
+        {
+            this.breakpoint = breakpoint;
         }
 
         private void _loadInputs(string type, string inputsString)
@@ -122,7 +128,7 @@ namespace BirdStudio
             return result;
         }
 
-        public void writeFile(string file)
+        public string writeString()
         {
             List<string> lines = new List<string>();
             lines.Add("0:");
@@ -145,8 +151,12 @@ namespace BirdStudio
             lines.Add(_writeInputs(" UD"));
             lines.Add("");
             lines.Add(breakpoint.ToString());
-            string contents = string.Join('\n', lines);
-            System.IO.File.WriteAllText(file, contents);
+            return string.Join('\n', lines);
+        }
+
+        public void writeFile(string file)
+        {
+            System.IO.File.WriteAllText(file, writeString());
         }
     }
 }
