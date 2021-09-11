@@ -78,11 +78,14 @@ namespace BirdStudio
             {
                 return new Message(stream);
             }
-            catch(FormatException e)
+            catch(Exception e) when (e is SocketException || e is FormatException)
             {
-                // Unable to process the next stream data, but bytes were still
-                // consumed. Any attempts to continue with the current stream
-                // will likely produce further errors, so force a reconnect.
+                // FormatException: Unable to process the next stream data, but
+                // bytes were still consumed. Any attempts to continue with the
+                // current stream will likely produce further errors, so force
+                // a reconnect.
+                // SocketException: Lost connection to TCP server, likely
+                // because the game was closed, so disconnect.
                 tcp = null;
                 return null;
             }
@@ -90,6 +93,8 @@ namespace BirdStudio
 
         public static void sendLoadReplayCommand(string levelName, string replayBuffer, int breakpoint)
         {
+            if (!tcp.Connected)
+                return;
             Util.WriteString(stream, "LoadReplay");
             Util.WriteString(stream, levelName);
             Util.WriteString(stream, replayBuffer);

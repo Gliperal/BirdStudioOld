@@ -30,10 +30,12 @@ namespace BirdStudio
     /// </summary>
     public partial class MainWindow : Window
     {
+        private LineHighlighter bgRenderer;
         private string gameDirectory;
         private string replayFile;
         private string tasFile;
         private TAS tas;
+        private int currentFrame = -1;
 
         public MainWindow()
         {
@@ -57,6 +59,8 @@ namespace BirdStudio
             while (true)
             {
                 Message message = TcpManager.listenForMessage();
+                if (message == null)
+                    continue;
                 switch(message.type)
                 {
                     case "SaveReplay":
@@ -66,12 +70,16 @@ namespace BirdStudio
                         OnReplaySaved(levelName, replayBuffer, breakpoint);
                         break;
                     case "Frame":
-                        int frame = (int) message.args[0];
+                        currentFrame = (int) message.args[0];
+                        ShowPlaybackFrame(); // TODO when to set playback frame back to -1?
                         float pos_x = (float) message.args[1];
                         float pos_y = (float) message.args[2];
                         float vel_x = (float) message.args[3];
                         float vel_y = (float) message.args[4];
                         // TODO
+                        break;
+                    default:
+                        inputEditor.Text = message.type;
                         break;
                 }
             }
@@ -147,7 +155,22 @@ namespace BirdStudio
             inputEditor.SyntaxHighlighting = highlighting;
 
             inputEditor.TextArea.TextView.BackgroundRenderers.Clear();
-            inputEditor.TextArea.TextView.BackgroundRenderers.Add(new LineHighlighter(inputEditor, cs.activeLine));
+            bgRenderer = new LineHighlighter(inputEditor, cs.activeLine);
+            inputEditor.TextArea.TextView.BackgroundRenderers.Add(bgRenderer);
+            ShowPlaybackFrame();
+        }
+
+        private void ShowPlaybackFrame()
+        {
+            if (tas != null && currentFrame != -1)
+            {
+                int[] frameLocation = tas.locateFrame(currentFrame);
+                bgRenderer.ShowActiveFrame(frameLocation[0], frameLocation[1]);
+            }
+            App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
+            {
+                inputEditor.TextArea.TextView.Redraw();
+            });
         }
 
         private void Menu_LightMode(object sender, RoutedEventArgs e)

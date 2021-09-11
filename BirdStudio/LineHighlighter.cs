@@ -12,9 +12,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Globalization;
 
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.AvalonEdit.Document;
 
 namespace BirdStudio
 {
@@ -22,6 +24,8 @@ namespace BirdStudio
     {
         private TextEditor _editor;
         private Brush _brush;
+        private int line = -1;
+        private int frame;
 
         public LineHighlighter(TextEditor editor, Brush brush)
         {
@@ -65,6 +69,36 @@ namespace BirdStudio
             //r.Width = 100;
             //r.Height = line.Height;
             //drawingContext.DrawRectangle(Brushes.Red, null, r);
+
+            if (line > -1)
+            {
+                DocumentLine docLine = _editor.Document.GetLineByNumber(line + 1);
+                foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, docLine))
+                {
+                    // This is probably the wrong way to do this
+                    drawingContext.DrawRectangle(
+                        new SolidColorBrush(Color.FromRgb(253, 217, 151)), null,
+                        new Rect(rect.Location, new Size(textView.ActualWidth, rect.Height))
+                    );
+                    FormattedText text = new FormattedText(
+                        frame.ToString(),
+                        CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight,
+                        new Typeface("Consolas"),
+                        14,
+                        new SolidColorBrush(Color.FromRgb(0, 0, 0)),
+                        1 //TODO dafuq is pixels per DIP
+                    );
+                    Point origin = new Point(textView.ActualWidth - text.Width, rect.Top);
+                    drawingContext.DrawText(text, origin);
+                }
+            }
+        }
+
+        public void ShowActiveFrame(int line, int frame)
+        {
+            this.line = line;
+            this.frame = frame;
         }
     }
 }

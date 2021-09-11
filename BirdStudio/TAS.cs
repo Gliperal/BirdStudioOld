@@ -167,5 +167,23 @@ namespace BirdStudio
             }
             return frame;
         }
+
+        public int[] locateFrame(int frame)
+        {
+            int lineStartFrame = 0;
+            int lineEndFrame = 0;
+            for (int i = 0; i < lines.Count(); i++)
+            {
+                lineStartFrame = lineEndFrame;
+                string line = lines[i].Trim();
+                if (!_isInputLine(line))
+                    continue;
+                string[] s = line.Split(',');
+                lineEndFrame += Int32.Parse(s[0]);
+                if (frame <= lineEndFrame)
+                    return new int[] { i, frame - lineStartFrame };
+            }
+            return new int[] { lines.Count() - 1, frame - lineStartFrame };
+        }
     }
 }
