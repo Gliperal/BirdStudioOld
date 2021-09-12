@@ -71,6 +71,11 @@ namespace BirdStudio
             }
         }
 
+        public static bool isConnected()
+        {
+            return tcp.Connected;
+        }
+
         public static Message listenForMessage()
         {
             connect();

@@ -1,19 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BirdStudio
 {
     public class TAS
     {
+        public class InputLine
+        {
+            public int frames;
+            public string buttons;
+
+            public InputLine(int frames, string buttons)
+            {
+                this.frames = frames;
+                this.buttons = buttons;
+            }
+        }
+
         private List<string> lines;
         public string stage { get; }
 
-        public TAS(List<string> _lines)
+        public TAS(List<string> lines)
         {
-            lines = _lines;
+            this.lines = lines;
             foreach (string l in lines)
             {
                 string line = l.Trim();
@@ -22,11 +32,11 @@ namespace BirdStudio
             }
         }
 
-        public TAS(List<Press> presses, string _stage)
+        public TAS(List<Press> presses, string stage)
         {
             lines = new List<string>();
-            stage = _stage;
-            lines.Add("stage " + _stage);
+            this.stage = stage;
+            lines.Add("stage " + stage);
             lines.Add("");
             presses.Sort(Press.compareFrames);
             HashSet<char> state = new HashSet<char>();
@@ -64,11 +74,41 @@ namespace BirdStudio
             return string.Join('\n', lines);
         }
 
-        private static bool _isInputLine(string line)
+        // TODO kinda inefficient to reparse these lines for every call to locateFrame
+        // would be better to just save the parsed lines
+        private InputLine _toInputLine(string line)
         {
-            if (line == "" || line.StartsWith('#') || line.StartsWith("stage "))
-                return false;
-            return true;
+            line = line.Trim();
+            if (line == "" || line.StartsWith('#'))
+                return null;
+            string frames;
+            string buttons;
+            if (line.Contains(','))
+            {
+                string[] s = line.Split(',', 2);
+                frames = s[0];
+                buttons = string.Join("", s[1].ToUpper().Split(','));
+            }
+            else
+            {
+                // frame with no inputs
+                frames = line;
+                buttons = "";
+            }
+            // inputs with no frame
+            if (frames == "")
+                return new InputLine(0, buttons);
+            try
+            {
+                return new InputLine(Int32.Parse(frames), buttons);
+            }
+            catch { }
+            return null;
+        }
+
+        private bool _isInputLine(string line)
+        {
+            return _toInputLine(line) != null;
         }
 
         public List<Press> toPresses()
@@ -76,25 +116,12 @@ namespace BirdStudio
             List<Press> presses = new List<Press>();
             HashSet<char> state = new HashSet<char>();
             int frame = 0;
-            foreach (string l in lines)
+            foreach (string line in lines)
             {
-                string line = l.Trim();
-                if (!_isInputLine(line))
+                InputLine inputLine = _toInputLine(line);
+                if (inputLine == null)
                     continue;
-                int frames;
-                string buttons;
-                if (line.Contains(','))
-                {
-                    string[] s = line.Split(',', 2);
-                    frames = Int32.Parse(s[0]);
-                    buttons = string.Join("", s[1].ToUpper().Split(','));
-                }
-                else
-                {
-                    frames = Int32.Parse(line);
-                    buttons = "";
-                }
-                foreach (char button in buttons)
+                foreach (char button in inputLine.buttons)
                     if (!state.Contains(button))
                     {
                         presses.Add(new Press
@@ -106,7 +133,7 @@ namespace BirdStudio
                         state.Add(button);
                     }
                 foreach (char button in state)
-                    if (!buttons.Contains(button))
+                    if (!inputLine.buttons.Contains(button))
                     {
                         presses.Add(new Press
                         {
@@ -116,7 +143,7 @@ namespace BirdStudio
                         });
                         state.Remove(button);
                     }
-                frame += frames;
+                frame += inputLine.frames;
             }
             return presses;
         }
@@ -160,10 +187,10 @@ namespace BirdStudio
             for (int i = 0; i < lineNumber; i++)
             {
                 string line = lines[i].Trim();
-                if (!_isInputLine(line))
+                InputLine inputLine = _toInputLine(line);
+                if (inputLine == null)
                     continue;
-                string[] s = line.Split(',');
-                frame += Int32.Parse(s[0]);
+                frame += inputLine.frames;
             }
             return frame;
         }
@@ -176,10 +203,10 @@ namespace BirdStudio
             {
                 lineStartFrame = lineEndFrame;
                 string line = lines[i].Trim();
-                if (!_isInputLine(line))
+                InputLine inputLine = _toInputLine(line);
+                if (inputLine == null)
                     continue;
-                string[] s = line.Split(',');
-                lineEndFrame += Int32.Parse(s[0]);
+                lineEndFrame += inputLine.frames;
                 if (frame <= lineEndFrame)
                     return new int[] { i, frame - lineStartFrame };
             }

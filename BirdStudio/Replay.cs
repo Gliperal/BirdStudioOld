@@ -12,61 +12,63 @@ namespace BirdStudio
         }
 
         private Dictionary<string, List<ReplayInput>> inputsByType;
-        private int breakpoint;
 
+        /// <exception cref="FormatException"></exception>
         private Replay(string[] lines)
         {
             inputsByType = new Dictionary<string, List<ReplayInput>>();
-            if (lines[0] != "0:") throw new FormatException();
+            if (lines.Length < 17) throw new FormatException("Too few lines.");
+            if (lines[0] != "0:") throw new FormatException("Expected 0: on line 0.");
             _loadInputs(" J", lines[1]);
-            if (lines[2] != "1:") throw new FormatException();
+            if (lines[2] != "1:") throw new FormatException("Expected 1: on line 2.");
             _loadInputs(" X", lines[3]);
-            if (lines[4] != "2:") throw new FormatException();
+            if (lines[4] != "2:") throw new FormatException("Expected 2: on line 4.");
             _loadInputs(" G", lines[5]);
-            if (lines[6] != "3:") throw new FormatException();
+            if (lines[6] != "3:") throw new FormatException("Expected 3: on line 6.");
             _loadInputs(" C", lines[7]);
-            if (lines[8] != "4:") throw new FormatException();
+            if (lines[8] != "4:") throw new FormatException("Expected 4: on line 8.");
             _loadInputs(" Q", lines[9]);
-            if (lines[10] != "") throw new FormatException();
-            if (lines[11] != "0:") throw new FormatException();
+            if (lines[10] != "") throw new FormatException("Expected line 10 to be empty.");
+            if (lines[11] != "0:") throw new FormatException("Expected 0: on line 11.");
             _loadInputs(" RL", lines[12]);
-            if (lines[13] != "1:") throw new FormatException();
+            if (lines[13] != "1:") throw new FormatException("Expected 1: on line 13.");
             _loadInputs(" UD", lines[14]);
-            if (lines[15] != "2:") throw new FormatException();
+            if (lines[15] != "2:") throw new FormatException("Expected 2: on line 15.");
             // TODO what if user doesn't record replay with dash axis
             if (lines[16] != lines[14]) throw new FormatException();
-            if (lines.Length > 17 && lines[17] != "") throw new FormatException();
-            breakpoint = (lines.Length > 18) ? Int32.Parse(lines[18]) : 0;
         }
 
         public Replay(string file) : this(System.IO.File.ReadAllLines(file)) {}
 
-        public Replay(string buffer, int breakpoint) : this(buffer.Split('\n'))
-        {
-            this.breakpoint = breakpoint;
-        }
+        public Replay(string buffer, bool _) : this(buffer.Split('\n')) {}
 
         private void _loadInputs(string type, string inputsString)
         {
-            List<ReplayInput> inputs = new List<ReplayInput>();
-            foreach (string input in inputsString.Split('|'))
+            try
             {
-                if (input == "")
-                    continue;
-                string[] s = input.Split(',');
-                inputs.Add(new ReplayInput
+                List<ReplayInput> inputs = new List<ReplayInput>();
+                foreach (string input in inputsString.Split('|'))
                 {
-                    frame = Int32.Parse(s[0]),
-                    buttonID = Int32.Parse(s[1])
-                });
+                    if (input == "")
+                        continue;
+                    string[] s = input.Split(',');
+                    inputs.Add(new ReplayInput
+                    {
+                        frame = Int32.Parse(s[0]),
+                        buttonID = Int32.Parse(s[1])
+                    });
+                }
+                inputsByType[type] = inputs;
             }
-            inputsByType[type] = inputs;
+            catch
+            {
+                throw new FormatException("Unable to parse inputs: " + inputsString);
+            }
         }
 
         private string[] TYPES = {" J", " X", " G", " C", " Q", " RL", " UD"};
-        public Replay(List<Press> presses, int _breakpoint)
+        public Replay(List<Press> presses)
         {
-            breakpoint = _breakpoint;
             inputsByType = new Dictionary<string, List<ReplayInput>>();
             foreach (string type in TYPES)
             {
@@ -98,6 +100,7 @@ namespace BirdStudio
             }
         }
 
+        // TODO handle IndexOutOfRangeException
         public List<Press> toPresses()
         {
             List<Press> presses = new List<Press>();
@@ -150,7 +153,6 @@ namespace BirdStudio
             // TODO should probably just not use dash axis for tas
             lines.Add(_writeInputs(" UD"));
             lines.Add("");
-            lines.Add(breakpoint.ToString());
             return string.Join('\n', lines);
         }
 

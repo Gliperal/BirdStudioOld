@@ -31,8 +31,6 @@ namespace BirdStudio
     public partial class MainWindow : Window
     {
         private LineHighlighter bgRenderer;
-        private string gameDirectory;
-        private string replayFile;
         private string tasFile;
         private TAS tas;
         private int currentFrame = -1;
@@ -90,7 +88,12 @@ namespace BirdStudio
             if (levelName != tas.stage) // TODO fails if tas is null
             { } // TODO update to a different level: would you like to open?
                 // no // yes (save current file) // yes (discard changes to current file)
-            Replay replay = new Replay(replayBuffer, breakpoint);
+            Replay replay;
+            try
+            {
+                replay = new Replay(replayBuffer, false);
+            }
+            catch (FormatException e) { return; }
             List<Press> presses = replay.toPresses();
             TAS newInputs = new TAS(presses, levelName);
             App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
@@ -101,43 +104,6 @@ namespace BirdStudio
                     tas = newInputs;
                 inputEditor.Text = tas.toText();
             });
-        }
-
-        private void AttemptProcessConnection()
-        {
-            try
-            {
-                Process[] processes = Process.GetProcessesByName("TheKingsBird");
-                string path = processes.First().MainModule.FileName;
-                int i = path.LastIndexOf('\\');
-                gameDirectory = path.Substring(0, i + 1);
-            }
-            catch
-            {
-                gameDirectory = null;
-            }
-            UpdateReplayFile();
-        }
-
-        private void UpdateReplayFile()
-        {
-            replayFile = null;
-            if ((gameDirectory == null) ||
-                (tas == null) ||
-                (tas.stage == null))
-            {
-                return;
-            }
-            string replayFolder = gameDirectory + @"Replays\";
-            try
-            {
-                Directory.CreateDirectory(replayFolder);
-            }
-            catch
-            {
-                System.Windows.Forms.MessageBox.Show("Unable to create directory '" + replayFolder + "'");
-            }
-            replayFile = gameDirectory + @"Replays\" + tas.stage + ".txt";
         }
 
         private void SetColorScheme(ColorScheme cs)
@@ -201,6 +167,16 @@ namespace BirdStudio
 
         private void OpenCommand_Execute(object sender, RoutedEventArgs e)
         {
+            string gameDirectory = null;
+            try
+            {
+                Process[] processes = Process.GetProcessesByName("TheKingsBird");
+                string path = processes.First().MainModule.FileName;
+                int i = path.LastIndexOf('\\');
+                gameDirectory = path.Substring(0, i + 1);
+            }
+            catch {}
+
             string file;
             using (OpenFileDialog openFileDialogue = new OpenFileDialog())
             {
@@ -216,26 +192,31 @@ namespace BirdStudio
                     return;
             }
 
-            if (file.EndsWith(".tas"))
+            tas = null;
+            if (!file.EndsWith(".tas"))
+            {
+                // replay file
+                try
+                {
+                    Replay replay = new Replay(file);
+                    List<Press> presses = replay.toPresses();
+                    string stage = filePathToNameOnly(file);
+                    tas = new TAS(presses, stage);
+                    tasFile = null;
+                }
+                catch (FormatException ex)
+                {
+                    tas = null;
+                }
+            }
+            if (tas == null)
             {
                 // tas file
                 string[] lines = System.IO.File.ReadAllLines(file);
                 tas = new TAS(lines.ToList());
                 tasFile = file;
             }
-            else
-            {
-                // replay file
-                Replay replay = new Replay(file);
-                List<Press> presses = replay.toPresses();
-                string stage = filePathToNameOnly(file);
-                tas = new TAS(presses, stage);
-                tasFile = null;
-            }
             inputEditor.Text = string.Join('\n', tas.toText());
-            // TODO this is sloppy
-            // it will cause TextChanged to fire, creating a 2nd TAS object for no reason
-            UpdateReplayFile();
         }
 
         private void _saveAs(string file)
@@ -266,15 +247,13 @@ namespace BirdStudio
 
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            if (gameDirectory == null)
-                AttemptProcessConnection();
-            e.CanExecute = (replayFile != null);
+            e.CanExecute = TcpManager.isConnected();
         }
 
         private void _watch(int breakpoint)
         {
             List<Press> presses = tas.toPresses();
-            Replay replay = new Replay(presses, breakpoint);
+            Replay replay = new Replay(presses);
             string replayBuffer = replay.writeString();
             TcpManager.sendLoadReplayCommand(tas.stage, replayBuffer, breakpoint);
         }
