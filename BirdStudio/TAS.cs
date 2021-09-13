@@ -76,27 +76,25 @@ namespace BirdStudio
 
         // TODO kinda inefficient to reparse these lines for every call to locateFrame
         // would be better to just save the parsed lines
-        private InputLine _toInputLine(string line)
+        private static InputLine _toInputLine(string line)
         {
             line = line.Trim();
             if (line == "" || line.StartsWith('#'))
                 return null;
-            string frames;
-            string buttons;
-            if (line.Contains(','))
-            {
-                string[] s = line.Split(',', 2);
-                frames = s[0];
-                buttons = string.Join("", s[1].ToUpper().Split(','));
-            }
-            else
-            {
-                // frame with no inputs
-                frames = line;
-                buttons = "";
-            }
-            // inputs with no frame
-            if (frames == "")
+            int split = line.LastIndexOfAny("0123456789".ToCharArray()) + 1;
+            // No frame number is a special case: It could be someone typing
+            // "stage" which should not count as an input line. It could also be
+            // someone deleting the frame number to type another, which should
+            // be counted, so we look for a leading comma.
+            if (split == 0 && !line.StartsWith(','))
+                return null;
+            string frames = line.Substring(0, split);
+            string buttons = line.Substring(split).ToUpper();
+            buttons = string.Join("", buttons.Split(','));
+            foreach (char c in buttons)
+                if (!Char.IsLetter(c))
+                    return null;
+            if (split == 0)
                 return new InputLine(0, buttons);
             try
             {
@@ -106,7 +104,7 @@ namespace BirdStudio
             return null;
         }
 
-        private bool _isInputLine(string line)
+        private static bool _isInputLine(string line)
         {
             return _toInputLine(line) != null;
         }
@@ -211,6 +209,26 @@ namespace BirdStudio
                     return new int[] { i, frame - lineStartFrame };
             }
             return new int[] { lines.Count() - 1, frame - lineStartFrame };
+        }
+
+        public static string updateLine(string oldText, int insertAt, string addedText)
+        {
+            if (addedText == "\n" && _isInputLine(oldText))
+                return oldText + "\n";
+            string newText = oldText.Insert(insertAt, addedText);
+            InputLine inputLine = _toInputLine(newText);
+            if (inputLine == null)
+                return null;
+            // if the difference is a newline, push it to the end
+            HashSet<char> buttons = new HashSet<char>();
+            foreach (char c in inputLine.buttons)
+            {
+                if (buttons.Contains(c))
+                    buttons.Remove(c);
+                else
+                    buttons.Add(c);
+            }
+            return _tasLine(inputLine.frames, buttons);
         }
     }
 }

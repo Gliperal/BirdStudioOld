@@ -23,14 +23,18 @@ namespace BirdStudio
     public class LineHighlighter : IBackgroundRenderer
     {
         private TextEditor _editor;
-        private Brush _brush;
+        private Brush _currentLineBrush;
+        private Brush _playbackLineBrush;
+        private Brush _playbackFrameBrush;
         private int line = -1;
         private int frame;
 
-        public LineHighlighter(TextEditor editor, Brush brush)
+        public LineHighlighter(TextEditor editor, Brush currentLine, Brush playbackLine, Brush playbackFrame)
         {
             _editor = editor;
-            _brush = brush;
+            _currentLineBrush = currentLine;
+            _playbackLineBrush = playbackLine;
+            _playbackFrameBrush = playbackFrame;
         }
 
         public KnownLayer Layer
@@ -58,38 +62,30 @@ namespace BirdStudio
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine))
             {
                 drawingContext.DrawRectangle(
-                    _brush, null,
+                    _currentLineBrush, null,
                     new Rect(rect.Location, new Size(textView.ActualWidth, rect.Height)));
             }
-
-            //VisualLine line = textView.VisualLines[9];
-            //Rect r = new Rect();
-            //r.X = 0;
-            //r.Y = line.VisualTop;
-            //r.Width = 100;
-            //r.Height = line.Height;
-            //drawingContext.DrawRectangle(Brushes.Red, null, r);
 
             if (line > -1)
             {
                 DocumentLine docLine = _editor.Document.GetLineByNumber(line + 1);
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, docLine))
                 {
-                    // This is probably the wrong way to do this
                     drawingContext.DrawRectangle(
-                        new SolidColorBrush(Color.FromRgb(253, 217, 151)), null,
+                        _playbackLineBrush, null,
                         new Rect(rect.Location, new Size(textView.ActualWidth, rect.Height))
                     );
+                    // This is probably the wrong way to do this
                     FormattedText text = new FormattedText(
                         frame.ToString(),
                         CultureInfo.CurrentCulture,
                         FlowDirection.LeftToRight,
                         new Typeface("Consolas"),
-                        14,
-                        new SolidColorBrush(Color.FromRgb(0, 0, 0)),
+                        19,
+                        _playbackFrameBrush,
                         1 //TODO dafuq is pixels per DIP
                     );
-                    Point origin = new Point(textView.ActualWidth - text.Width, rect.Top);
+                    Point origin = new Point(textView.ActualWidth - text.Width - 5, rect.Top);
                     drawingContext.DrawText(text, origin);
                 }
             }

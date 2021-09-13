@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Xml;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using ICSharpCode.AvalonEdit.Document;
 
 namespace BirdStudio
 {
@@ -50,6 +51,7 @@ namespace BirdStudio
             }
             SetColorScheme(ColorScheme.LightMode());
             new Thread(new ThreadStart(TalkWithGame)).Start();
+            inputEditor.TextArea.TextEntering += Editor_TextEntering;
         }
 
         private void TalkWithGame()
@@ -121,7 +123,7 @@ namespace BirdStudio
             inputEditor.SyntaxHighlighting = highlighting;
 
             inputEditor.TextArea.TextView.BackgroundRenderers.Clear();
-            bgRenderer = new LineHighlighter(inputEditor, cs.activeLine);
+            bgRenderer = new LineHighlighter(inputEditor, cs.activeLine, cs.playbackLine, cs.playbackFrame);
             inputEditor.TextArea.TextView.BackgroundRenderers.Add(bgRenderer);
             ShowPlaybackFrame();
         }
@@ -132,11 +134,11 @@ namespace BirdStudio
             {
                 int[] frameLocation = tas.locateFrame(currentFrame);
                 bgRenderer.ShowActiveFrame(frameLocation[0], frameLocation[1]);
+                App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
+                {
+                    inputEditor.TextArea.TextView.Redraw();
+                });
             }
-            App.Current.Dispatcher.Invoke((Action)delegate // need to update on main thread
-            {
-                inputEditor.TextArea.TextView.Redraw();
-            });
         }
 
         private void Menu_LightMode(object sender, RoutedEventArgs e)
@@ -149,10 +151,30 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.DarkMode());
         }
 
+        private void Editor_TextEntering(object sender, TextCompositionEventArgs e)
+        {
+            DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
+            string oldText = inputEditor.Document.Text.Substring(line.Offset, line.Length);
+            int insertAt = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column - 1;
+            string reformattedText = TAS.updateLine(oldText, insertAt, e.Text);
+            if (reformattedText != null)
+            {
+                inputEditor.Document.Replace(line, reformattedText);
+                inputEditor.CaretOffset = line.Offset + 4;
+                // TODO this is such a lazy way to handle this
+                if (reformattedText == oldText + "\n")
+                    inputEditor.CaretOffset = line.NextLine.Offset;
+                e.Handled = true;
+            }
+            // TODO this is ugly: would much rather replace a single line
+            // I need to decide if I want the TAS object to be constantly synced, or only when necessary
+            tas = new TAS(inputEditor.Text.Split('\n').ToList());
+        }
+
         private void Editor_TextChanged(object sender, System.EventArgs e)
         {
-            tas = new TAS(inputEditor.Text.Split('\n').ToList());
-            // inputEditor.Document.Text = string.Join('\n', tas.lines);
+            // TODO any text changes that aren't caught by TextEntering?
+            ShowPlaybackFrame();
         }
 
         private string filePathToNameOnly(string path)
@@ -192,7 +214,8 @@ namespace BirdStudio
                     return;
             }
 
-            tas = null;
+            // TODO handle file IO exceptions
+            bool fileIsReplay = false;
             if (!file.EndsWith(".tas"))
             {
                 // replay file
@@ -203,13 +226,11 @@ namespace BirdStudio
                     string stage = filePathToNameOnly(file);
                     tas = new TAS(presses, stage);
                     tasFile = null;
+                    fileIsReplay = true;
                 }
-                catch (FormatException ex)
-                {
-                    tas = null;
-                }
+                catch (FormatException ex) {}
             }
-            if (tas == null)
+            if (!fileIsReplay)
             {
                 // tas file
                 string[] lines = System.IO.File.ReadAllLines(file);

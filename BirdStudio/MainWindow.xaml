@@ -48,7 +48,7 @@
             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
             Name="inputEditor"
             FontFamily="Consolas"
-            FontSize="14pt"
+            FontSize="19"
             ShowLineNumbers="True"
             TextChanged="Editor_TextChanged"
         />

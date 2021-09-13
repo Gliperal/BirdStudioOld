@@ -11,6 +11,8 @@ namespace BirdStudio
         public HighlightingBrush frame { get; set; }
         public HighlightingBrush input { get; set; }
         public Brush activeLine { get; set; }
+        public Brush playbackLine { get; set; }
+        public Brush playbackFrame { get; set; }
 
         public static ColorScheme LightMode()
         {
@@ -21,7 +23,9 @@ namespace BirdStudio
                 comment = new SimpleHighlightingBrush(Color.FromRgb(0, 0x80, 0)),
                 frame = new SimpleHighlightingBrush(Color.FromRgb(0xFF, 0, 0)),
                 input = new SimpleHighlightingBrush(Color.FromRgb(0, 0, 0xFF)),
-                activeLine = Brushes.Gainsboro
+                activeLine = Brushes.Gainsboro,
+                playbackLine = new SolidColorBrush(Color.FromRgb(0xFD, 0xD8, 0x98)),
+                playbackFrame = Brushes.Black
             };
         }
 
@@ -34,7 +38,9 @@ namespace BirdStudio
                 comment = new SimpleHighlightingBrush(Color.FromRgb(0x18, 0xA0, 0x30)),
                 frame = new SimpleHighlightingBrush(Color.FromRgb(0xE0, 0x60, 0x40)),
                 input = new SimpleHighlightingBrush(Color.FromRgb(0x0A, 0xA0, 0xE0)),
-                activeLine = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38))
+                activeLine = new SolidColorBrush(Color.FromRgb(0x38, 0x38, 0x38)),
+                playbackLine = new SolidColorBrush(Color.FromRgb(0x55, 0x48, 0)),
+                playbackFrame = Brushes.Orange
             };
         }
     }
