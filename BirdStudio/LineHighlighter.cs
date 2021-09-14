@@ -66,7 +66,7 @@ namespace BirdStudio
                     new Rect(rect.Location, new Size(textView.ActualWidth, rect.Height)));
             }
 
-            if (line > -1)
+            if (line > -1 && line < _editor.Document.LineCount)
             {
                 DocumentLine docLine = _editor.Document.GetLineByNumber(line + 1);
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, docLine))

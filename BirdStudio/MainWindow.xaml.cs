@@ -33,7 +33,7 @@ namespace BirdStudio
     {
         private LineHighlighter bgRenderer;
         private string tasFile;
-        private TAS tas;
+        private TAS tas = new TAS("".Split('\n').ToList());
         private int currentFrame = -1;
 
         public MainWindow()
@@ -52,6 +52,7 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.LightMode());
             new Thread(new ThreadStart(TalkWithGame)).Start();
             inputEditor.TextArea.TextEntering += Editor_TextEntering;
+            inputEditor.TextArea.PreviewKeyDown += Editor_KeyDown;
         }
 
         private void TalkWithGame()
@@ -87,7 +88,7 @@ namespace BirdStudio
 
         private void OnReplaySaved(string levelName, string replayBuffer, int breakpoint)
         {
-            if (levelName != tas.stage) // TODO fails if tas is null
+            if (levelName != tas.stage)
             { } // TODO update to a different level: would you like to open?
                 // no // yes (save current file) // yes (discard changes to current file)
             Replay replay;
@@ -104,6 +105,7 @@ namespace BirdStudio
                     tas.updateInputs(newInputs);
                 else
                     tas = newInputs;
+                // TODO this clears the undo stack don't do that
                 inputEditor.Text = tas.toText();
             });
         }
@@ -130,7 +132,7 @@ namespace BirdStudio
 
         private void ShowPlaybackFrame()
         {
-            if (tas != null && currentFrame != -1)
+            if (currentFrame != -1)
             {
                 int[] frameLocation = tas.locateFrame(currentFrame);
                 bgRenderer.ShowActiveFrame(frameLocation[0], frameLocation[1]);
@@ -151,29 +153,47 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.DarkMode());
         }
 
+        private void Editor_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Back || e.Key == Key.Delete)
+            {
+                int deletePos = inputEditor.CaretOffset;
+                if (e.Key == Key.Back)
+                    deletePos -= 1;
+                if (deletePos < 0)
+                {
+                    e.Handled = true;
+                    return;
+                }
+                TextLocation deleteAt = inputEditor.Document.GetLocation(deletePos);
+                System.Drawing.Point caretPos = tas.removeText(deleteAt.Line - 1, deleteAt.Column - 1, 1);
+                // TODO this is going to clear the undo stack, so it's only a temporary fix
+                inputEditor.Text = tas.toText();
+                DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
+                inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
+                ShowPlaybackFrame();
+                e.Handled = true;
+                // TODO test backspace at beginning of document and delete at end
+            }
+        }
+
         private void Editor_TextEntering(object sender, TextCompositionEventArgs e)
         {
             DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
             string oldText = inputEditor.Document.Text.Substring(line.Offset, line.Length);
             int insertAt = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column - 1;
-            string reformattedText = TAS.updateLine(oldText, insertAt, e.Text);
-            if (reformattedText != null)
-            {
-                inputEditor.Document.Replace(line, reformattedText);
-                inputEditor.CaretOffset = line.Offset + 4;
-                // TODO this is such a lazy way to handle this
-                if (reformattedText == oldText + "\n")
-                    inputEditor.CaretOffset = line.NextLine.Offset;
-                e.Handled = true;
-            }
-            // TODO this is ugly: would much rather replace a single line
-            // I need to decide if I want the TAS object to be constantly synced, or only when necessary
-            tas = new TAS(inputEditor.Text.Split('\n').ToList());
+            System.Drawing.Point caretPos = tas.insertText(line.LineNumber - 1, insertAt, e.Text);
+            // TODO this is going to clear the undo stack, so it's only a temporary fix
+            inputEditor.Text = tas.toText();
+            DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
+            inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
+            ShowPlaybackFrame();
+            e.Handled = true;
         }
 
         private void Editor_TextChanged(object sender, System.EventArgs e)
         {
-            // TODO any text changes that aren't caught by TextEntering?
+            // TODO any text changes that aren't caught by the above should force a reload of the entire tas file
             ShowPlaybackFrame();
         }
 
@@ -268,7 +288,7 @@ namespace BirdStudio
 
         private void WatchFromStart_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = TcpManager.isConnected();
+            e.CanExecute = TcpManager.isConnected() && tas.stage != null;
         }
 
         private void _watch(int breakpoint)
@@ -286,7 +306,7 @@ namespace BirdStudio
 
         private void WatchToCursor_Execute(object sender, RoutedEventArgs e)
         {
-            _watch(tas.startingFrameForLine(inputEditor.TextArea.Caret.Line - 1));
+            _watch(tas.endingFrameForLine(inputEditor.TextArea.Caret.Line - 1));
         }
     }
 }

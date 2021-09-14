@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace BirdStudio
@@ -19,23 +20,19 @@ namespace BirdStudio
         }
 
         private List<string> lines;
-        public string stage { get; }
+        private string _stage;
+        public string stage { get => _stage; }
 
         public TAS(List<string> lines)
         {
             this.lines = lines;
-            foreach (string l in lines)
-            {
-                string line = l.Trim();
-                if (line.StartsWith("stage "))
-                    stage = line.Substring(6);
-            }
+            _obtainStage();
         }
 
         public TAS(List<Press> presses, string stage)
         {
             lines = new List<string>();
-            this.stage = stage;
+            _stage = stage;
             lines.Add("stage " + stage);
             lines.Add("");
             presses.Sort(Press.compareFrames);
@@ -54,6 +51,17 @@ namespace BirdStudio
                     state.Remove(press.button);
             }
             lines.Add(_tasLine(1, state));
+        }
+
+        private void _obtainStage()
+        {
+            _stage = null;
+            foreach (string l in lines)
+            {
+                string line = l.Trim();
+                if (line.StartsWith("stage "))
+                    _stage = line.Substring(6);
+            }
         }
 
         private static string _tasLine(int frames, HashSet<char> buttons)
@@ -193,6 +201,22 @@ namespace BirdStudio
             return frame;
         }
 
+        public int endingFrameForLine(int lineNumber)
+        {
+            if (lineNumber >= lines.Count())
+                return -1;
+            int frame = 0;
+            for (int i = 0; i <= lineNumber; i++)
+            {
+                string line = lines[i].Trim();
+                InputLine inputLine = _toInputLine(line);
+                if (inputLine == null)
+                    continue;
+                frame += inputLine.frames;
+            }
+            return frame;
+        }
+
         public int[] locateFrame(int frame)
         {
             int lineStartFrame = 0;
@@ -211,15 +235,17 @@ namespace BirdStudio
             return new int[] { lines.Count() - 1, frame - lineStartFrame };
         }
 
-        public static string updateLine(string oldText, int insertAt, string addedText)
+        private Point _replaceLine(int lineNumber, string oldText, string newText, int caret)
         {
-            if (addedText == "\n" && _isInputLine(oldText))
-                return oldText + "\n";
-            string newText = oldText.Insert(insertAt, addedText);
             InputLine inputLine = _toInputLine(newText);
             if (inputLine == null)
-                return null;
-            // if the difference is a newline, push it to the end
+            {
+                // worth checking if oldText was input line? (e.g. 100,L -> 10X0,L)
+                lines[lineNumber] = newText;
+                if (oldText.StartsWith("stage ") || newText.StartsWith("stage "))
+                    _obtainStage();
+                return new Point(lineNumber, caret);
+            }
             HashSet<char> buttons = new HashSet<char>();
             foreach (char c in inputLine.buttons)
             {
@@ -228,7 +254,51 @@ namespace BirdStudio
                 else
                     buttons.Add(c);
             }
-            return _tasLine(inputLine.frames, buttons);
+            lines[lineNumber] = _tasLine(inputLine.frames, buttons);
+            return new Point(lineNumber, 4);
+        }
+
+        // update the text, and return a Point describing where to place the caret
+        public Point insertText(int lineNumber, int column, string textToInsert)
+        {
+            string oldText = lines[lineNumber];
+            if (textToInsert.Contains("\n"))
+            {
+                if (_isInputLine(oldText))
+                {
+                    if (oldText.Substring(0, column).Trim() == "")
+                        lines.Insert(lineNumber, "");
+                    else
+                        lines.Insert(lineNumber + 1, "");
+                    return new Point(lineNumber + 1, 0);
+                }
+                else
+                {
+                    lines.Insert(lineNumber + 1, oldText.Substring(column));
+                    lines[lineNumber] = oldText.Substring(0, column);
+                    return new Point(lineNumber + 1, 0);
+                }
+            }
+            string newText = oldText.Insert(column, textToInsert);
+            return _replaceLine(lineNumber, oldText, newText, column + textToInsert.Length);
+        }
+
+        public Point removeText(int lineNumber, int column, int length)
+        {
+            string oldText = lines[lineNumber];
+            if (column + length > oldText.Length)
+            {
+                if (lineNumber + 1 < lines.Count)
+                {
+                    lines[lineNumber] = oldText.Substring(0, column) + lines[lineNumber + 1];
+                    lines.RemoveAt(lineNumber + 1);
+                }
+                else
+                    lines[lineNumber] = oldText.Substring(0, column);
+                return new Point(lineNumber, column);
+            }
+            string newText = oldText.Substring(0, column) + oldText.Substring(column + length);
+            return _replaceLine(lineNumber, oldText, newText, column);
         }
     }
 }
