@@ -26,6 +26,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
@@ -40,6 +41,7 @@
             </MenuItem>
             <MenuItem Header="_Preferences">
                 <MenuItem Header="_Dark Mode" IsCheckable="True" Checked="Menu_DarkMode" Unchecked="Menu_LightMode" />
+                <MenuItem Header="_Show/Hide Help" Click="Menu_ToggleHelp" />
             </MenuItem>
         </Menu>
         <avalonEdit:TextEditor
@@ -52,5 +54,27 @@
             ShowLineNumbers="True"
             TextChanged="Editor_TextChanged"
         />
+        <TextBlock
+            Name="buttonHelper"
+            Grid.Row="2"
+            Padding="5px"
+            Visibility="Collapsed"
+            TextWrapping="WrapWithOverflow"
+        >
+            <Run FontWeight="Bold" Text="Letter Meanings"/>
+            <LineBreak/>
+            <Run Text="[R] Right [L] Left [U] Up [D] Down"/>
+            <LineBreak/>
+            <Run Text="[J] Jump [X] Dash [G] Glide [C] Interact"/>
+            <LineBreak/>
+            <Run Text="[Q] Reset [M] Dash Axis 1 [N] Dash Axis 2"/>
+            <LineBreak/>
+            <LineBreak/>
+            <Run FontWeight="Bold" Text="Commands"/>
+            <LineBreak/>
+            <Run Text="stage: load the specified stage (necessary for playback)"/>
+            <LineBreak/>
+            <Run Text="#: begin a comment"/>
+        </TextBlock>
     </Grid>
 </Window>
