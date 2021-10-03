@@ -68,13 +68,16 @@ namespace BirdStudio
         {
             if (buttons.Count == 0)
                 return String.Format("{0,4}", frames);
-            const string order = "RLUDJXGCQ";
+            const string order = "RLUDJXGCQMN";
             List<char> orderedButtons = new List<char>();
             foreach (char c in order)
                 if (buttons.Contains(c))
                     orderedButtons.Add(c);
             string buttonsStr = string.Join(",", orderedButtons);
-            return String.Format("{0,4},{1}", frames, buttonsStr);
+            if (buttonsStr == "")
+                return String.Format("{0,4}", frames);
+            else
+                return String.Format("{0,4},{1}", frames, buttonsStr);
         }
 
         public string toText()
@@ -299,6 +302,14 @@ namespace BirdStudio
             }
             string newText = oldText.Substring(0, column) + oldText.Substring(column + length);
             return _replaceLine(lineNumber, oldText, newText, column);
+        }
+
+        public Point reformatLine(int lineNumber)
+        {
+            string oldText = lines[lineNumber];
+            if (_isInputLine(oldText))
+                return _replaceLine(lineNumber, oldText, oldText, -1);
+            return new Point(-1, -1);
         }
     }
 }

@@ -34,8 +34,7 @@ namespace BirdStudio
             if (lines[13] != "1:") throw new FormatException("Expected 1: on line 13.");
             _loadInputs(" UD", lines[14]);
             if (lines[15] != "2:") throw new FormatException("Expected 2: on line 15.");
-            // TODO what if user doesn't record replay with dash axis
-            if (lines[16] != lines[14]) throw new FormatException();
+            _loadInputs(" MN", lines[16]);
         }
 
         public Replay(string file) : this(System.IO.File.ReadAllLines(file)) {}
@@ -66,7 +65,7 @@ namespace BirdStudio
             }
         }
 
-        private string[] TYPES = {" J", " X", " G", " C", " Q", " RL", " UD"};
+        private string[] TYPES = {" J", " X", " G", " C", " Q", " RL", " UD", " MN"};
         public Replay(List<Press> presses)
         {
             inputsByType = new Dictionary<string, List<ReplayInput>>();
@@ -150,8 +149,7 @@ namespace BirdStudio
             lines.Add("1:");
             lines.Add(_writeInputs(" UD"));
             lines.Add("2:");
-            // TODO should probably just not use dash axis for tas
-            lines.Add(_writeInputs(" UD"));
+            lines.Add(_writeInputs(" MN"));
             lines.Add("");
             return string.Join('\n', lines);
         }

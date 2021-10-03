@@ -153,6 +153,17 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.DarkMode());
         }
 
+        private void OnTasEdited(System.Drawing.Point caretPos)
+        {
+            inputEditor.Document.Replace(
+                new TextSegment { StartOffset = 0, EndOffset = inputEditor.Text.Length },
+                tas.toText()
+            );
+            DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
+            inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
+            ShowPlaybackFrame();
+        }
+
         private void Editor_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Back || e.Key == Key.Delete)
@@ -167,13 +178,8 @@ namespace BirdStudio
                 }
                 TextLocation deleteAt = inputEditor.Document.GetLocation(deletePos);
                 System.Drawing.Point caretPos = tas.removeText(deleteAt.Line - 1, deleteAt.Column - 1, 1);
-                // TODO this is going to clear the undo stack, so it's only a temporary fix
-                inputEditor.Text = tas.toText();
-                DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
-                inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
-                ShowPlaybackFrame();
+                OnTasEdited(caretPos);
                 e.Handled = true;
-                // TODO test backspace at beginning of document and delete at end
             }
         }
 
@@ -183,18 +189,23 @@ namespace BirdStudio
             string oldText = inputEditor.Document.Text.Substring(line.Offset, line.Length);
             int insertAt = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column - 1;
             System.Drawing.Point caretPos = tas.insertText(line.LineNumber - 1, insertAt, e.Text);
-            // TODO this is going to clear the undo stack, so it's only a temporary fix
-            inputEditor.Text = tas.toText();
-            DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
-            inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
-            ShowPlaybackFrame();
+            OnTasEdited(caretPos);
             e.Handled = true;
         }
 
         private void Editor_TextChanged(object sender, System.EventArgs e)
         {
-            // TODO any text changes that aren't caught by the above should force a reload of the entire tas file
-            ShowPlaybackFrame();
+            // any text changes that aren't caught by the above should force a reload of the entire tas file
+            if (inputEditor.Text != tas.toText())
+            {
+                tas = new TAS(inputEditor.Text.Split('\n').ToList());
+                // reformat just the line the caret is on
+                DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
+                System.Drawing.Point caretPos = tas.reformatLine(line.LineNumber - 1);
+                if (caretPos.X != -1)
+                    OnTasEdited(caretPos);
+                ShowPlaybackFrame();
+            }
         }
 
         private string filePathToNameOnly(string path)
@@ -301,7 +312,7 @@ namespace BirdStudio
 
         private void WatchFromStart_Execute(object sender, RoutedEventArgs e)
         {
-            _watch(0);
+            _watch(-1);
         }
 
         private void WatchToCursor_Execute(object sender, RoutedEventArgs e)
