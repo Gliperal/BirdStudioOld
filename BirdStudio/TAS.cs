@@ -188,6 +188,20 @@ namespace BirdStudio
             lines = newLines;
         }
 
+        public void incrementRerecords()
+        {
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string line = lines[i].Trim();
+                if (line.StartsWith("rerecords "))
+                {
+                    int rerecords;
+                    if (int.TryParse(line.Substring(10).Trim(), out rerecords))
+                        lines[i] = "rerecords " + (rerecords + 1);
+                }
+            }
+        }
+
         public int startingFrameForLine(int lineNumber)
         {
             if (lineNumber >= lines.Count())

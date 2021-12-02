@@ -1,25 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Forms;
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Threading;
 
 using System.IO;
 using System.Reflection;
 using System.Xml;
+
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Document;
@@ -35,6 +27,7 @@ namespace BirdStudio
         private string tasFile;
         private TAS tas = new TAS("".Split('\n').ToList());
         private int currentFrame = -1;
+        private bool tasEditedSinceLastWatch = true;
 
         public MainWindow()
         {
@@ -50,10 +43,6 @@ namespace BirdStudio
                 }
             }
             SetColorScheme(ColorScheme.LightMode());
-            // TODO this is a temporary fix
-            Resources["Menu.Static.Background"] = new SolidColorBrush(Color.FromArgb(0xFF, 0xF0, 0xF0, 0xF0));
-            Resources["TextBlock.Background"] = Brushes.White;
-            Resources["TextBlock.Foreground"] = Brushes.Black;
             new Thread(new ThreadStart(TalkWithGame)).Start();
             inputEditor.TextArea.TextEntering += Editor_TextEntering;
             inputEditor.TextArea.PreviewKeyDown += Editor_KeyDown;
@@ -110,8 +99,8 @@ namespace BirdStudio
                     tas.updateInputs(newInputs);
                 else
                     tas = newInputs;
-                // TODO this clears the undo stack don't do that
-                inputEditor.Text = tas.toText();
+                tas.incrementRerecords();
+                OnTasEdited();
             });
         }
 
@@ -170,15 +159,25 @@ namespace BirdStudio
             SetColorScheme(ColorScheme.DarkMode());
         }
 
-        private void OnTasEdited(System.Drawing.Point caretPos)
+        private void OnTasEdited()
         {
+            if (!tasEditedSinceLastWatch)
+            {
+                tas.incrementRerecords();
+                tasEditedSinceLastWatch = true;
+            }
             inputEditor.Document.Replace(
                 new TextSegment { StartOffset = 0, EndOffset = inputEditor.Text.Length },
                 tas.toText()
             );
+            ShowPlaybackFrame();
+        }
+
+        private void OnTasEdited(System.Drawing.Point caretPos)
+        {
+            OnTasEdited();
             DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
             inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
-            ShowPlaybackFrame();
         }
 
         private void Editor_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -203,7 +202,6 @@ namespace BirdStudio
         private void Editor_TextEntering(object sender, TextCompositionEventArgs e)
         {
             DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
-            string oldText = inputEditor.Document.Text.Substring(line.Offset, line.Length);
             int insertAt = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column - 1;
             System.Drawing.Point caretPos = tas.insertText(line.LineNumber - 1, insertAt, e.Text);
             OnTasEdited(caretPos);
@@ -339,6 +337,7 @@ namespace BirdStudio
             Replay replay = new Replay(presses);
             string replayBuffer = replay.writeString();
             TcpManager.sendLoadReplayCommand(tas.stage, replayBuffer, breakpoint);
+            tasEditedSinceLastWatch = false;
         }
 
         private void WatchFromStart_Execute(object sender, RoutedEventArgs e)

@@ -379,6 +379,8 @@
             <LineBreak/>
             <Run Text="stage: load the specified stage (necessary for playback)"/>
             <LineBreak/>
+            <Run Text="rerecords: roughly tracks how many times the tas has been modified"/>
+            <LineBreak/>
             <Run Text="#: begin a comment"/>
         </TextBlock>
     </Grid>
