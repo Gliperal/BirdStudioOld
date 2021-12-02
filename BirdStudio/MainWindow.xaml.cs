@@ -71,7 +71,7 @@ namespace BirdStudio
                 {
                     case "SaveReplay":
                         string levelName = (string) message.args[0];
-                        string replayBuffer = (string)message.args[1];
+                        string replayBuffer = (string) message.args[1];
                         int breakpoint = (int) message.args[2]; // TODO do I actually care about this?
                         OnReplaySaved(levelName, replayBuffer, breakpoint);
                         break;
@@ -132,6 +132,10 @@ namespace BirdStudio
             inputEditor.TextArea.TextView.BackgroundRenderers.Clear();
             bgRenderer = new LineHighlighter(inputEditor, cs.activeLine, cs.playbackLine, cs.playbackFrame);
             inputEditor.TextArea.TextView.BackgroundRenderers.Add(bgRenderer);
+
+            foreach (KeyValuePair<string, SolidColorBrush> kvp in cs.resources)
+                Resources[kvp.Key] = kvp.Value;
+
             ShowPlaybackFrame();
         }
 
@@ -159,43 +163,11 @@ namespace BirdStudio
         private void Menu_LightMode(object sender, RoutedEventArgs e)
         {
             SetColorScheme(ColorScheme.LightMode());
-            Resources["Menu.Static.Background"] = new SolidColorBrush(Color.FromArgb(0xFF, 0xF0, 0xF0, 0xF0));
-            Resources["Menu.Static.Border"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x99, 0x99, 0x99));
-            Resources["Menu.Static.Foreground"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x21, 0x21, 0x21));
-            Resources["Menu.Static.Separator"] = new SolidColorBrush(Color.FromArgb(0xFF, 0xD7, 0xD7, 0xD7));
-            Resources["Menu.Disabled.Foreground"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x70, 0x70, 0x70));
-            Resources["MenuItem.Selected.Background"] = new SolidColorBrush(Color.FromArgb(0x3D, 0x26, 0xA0, 0xDA));
-            Resources["MenuItem.Selected.Border"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x26, 0xA0, 0xDA));
-            Resources["MenuItem.Highlight.Background"] = Resources["MenuItem.Selected.Background"];
-            Resources["MenuItem.Highlight.Border"] = Resources["MenuItem.Selected.Border"];
-            Resources["MenuItem.Highlight.Disabled.Background"] = new SolidColorBrush(Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
-            Resources["MenuItem.Highlight.Disabled.Border"] = new SolidColorBrush(Color.FromArgb(0x21, 0x00, 0x00, 0x00));
-
-            Resources["TextBlock.Background"] = Brushes.White;
-            Resources["TextBlock.Foreground"] = Brushes.Black;
         }
 
         private void Menu_DarkMode(object sender, RoutedEventArgs e)
         {
             SetColorScheme(ColorScheme.DarkMode());
-            Resources["Menu.Static.Background"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
-            Resources["Menu.Static.Border"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x60, 0x60, 0x60));
-            Resources["Menu.Static.Foreground"] = new SolidColorBrush(Color.FromArgb(0xFF, 0xD0, 0xD0, 0xD0));
-            Resources["Menu.Static.Separator"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x40, 0x40, 0x40));
-            Resources["Menu.Disabled.Foreground"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x70, 0x70, 0x70));
-            Resources["MenuItem.Selected.Background"] = new SolidColorBrush(Color.FromArgb(0x3D, 0x80, 0x80, 0x80));
-            Resources["MenuItem.Selected.Border"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x80, 0x80, 0x80));
-            Resources["MenuItem.Highlight.Background"] = Resources["MenuItem.Selected.Background"];
-            Resources["MenuItem.Highlight.Border"] = Resources["MenuItem.Selected.Border"];
-            Resources["MenuItem.Highlight.Disabled.Background"] = new SolidColorBrush(Color.FromArgb(0x0A, 0x00, 0x00, 0x00));
-            Resources["MenuItem.Highlight.Disabled.Border"] = new SolidColorBrush(Color.FromArgb(0x21, 0x00, 0x00, 0x00));
-
-            // are these ever used?
-            Resources["MenuItem.Highlight.Disabled.Background"] = new SolidColorBrush(Colors.Magenta);
-            Resources["MenuItem.Highlight.Disabled.Border"] = new SolidColorBrush(Colors.Magenta);
-
-            Resources["TextBlock.Background"] = new SolidColorBrush(Color.FromArgb(0xFF, 0x1A, 0x1A, 0x1A));
-            Resources["TextBlock.Foreground"] = new SolidColorBrush(Color.FromArgb(0xFF, 0xD0, 0xD0, 0xD0));
         }
 
         private void OnTasEdited(System.Drawing.Point caretPos)
