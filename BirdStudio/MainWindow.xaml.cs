@@ -184,16 +184,22 @@ namespace BirdStudio
         {
             if (e.Key == Key.Back || e.Key == Key.Delete)
             {
-                int deletePos = inputEditor.CaretOffset;
-                if (e.Key == Key.Back)
-                    deletePos -= 1;
-                if (deletePos < 0)
+                int deletePos = inputEditor.SelectionStart;
+                int deleteLength = inputEditor.SelectionLength;
+                if (deleteLength == 0)
                 {
-                    e.Handled = true;
-                    return;
+                    deleteLength = 1;
+                    if (e.Key == Key.Back)
+                        deletePos--;
+                    if (deletePos < 0)
+                    {
+                        e.Handled = true;
+                        return;
+                    }
                 }
-                TextLocation deleteAt = inputEditor.Document.GetLocation(deletePos);
-                System.Drawing.Point caretPos = tas.removeText(deleteAt.Line - 1, deleteAt.Column - 1, 1);
+                TextLocation deleteStart = inputEditor.Document.GetLocation(deletePos);
+                TextLocation deleteEnd = inputEditor.Document.GetLocation(deletePos + deleteLength);
+                System.Drawing.Point caretPos = tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1);
                 OnTasEdited(caretPos);
                 e.Handled = true;
             }
@@ -203,6 +209,16 @@ namespace BirdStudio
         {
             DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
             int insertAt = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column - 1;
+            if (inputEditor.SelectionLength > 0)
+            {
+                int deletePos = inputEditor.SelectionStart;
+                int deleteLength = inputEditor.SelectionLength;
+                TextLocation deleteStart = inputEditor.Document.GetLocation(deletePos);
+                TextLocation deleteEnd = inputEditor.Document.GetLocation(deletePos + deleteLength);
+                tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1);
+                line = inputEditor.Document.GetLineByOffset(deletePos);
+                insertAt = inputEditor.Document.GetLocation(deletePos).Column - 1;
+            }
             System.Drawing.Point caretPos = tas.insertText(line.LineNumber - 1, insertAt, e.Text);
             OnTasEdited(caretPos);
             e.Handled = true;

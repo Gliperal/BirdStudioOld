@@ -300,22 +300,16 @@ namespace BirdStudio
             return _replaceLine(lineNumber, oldText, newText, column + textToInsert.Length);
         }
 
-        public Point removeText(int lineNumber, int column, int length)
+        public Point removeText(int startLine, int startCol, int endLine, int endCol)
         {
-            string oldText = lines[lineNumber];
-            if (column + length > oldText.Length)
+            string oldText = lines[startLine];
+            string newText = lines[startLine].Substring(0, startCol) + lines[endLine].Substring(endCol);
+            while (endLine > startLine && startLine + 1 < lines.Count)
             {
-                if (lineNumber + 1 < lines.Count)
-                {
-                    lines[lineNumber] = oldText.Substring(0, column) + lines[lineNumber + 1];
-                    lines.RemoveAt(lineNumber + 1);
-                }
-                else
-                    lines[lineNumber] = oldText.Substring(0, column);
-                return new Point(lineNumber, column);
+                lines.RemoveAt(startLine + 1);
+                endLine--;
             }
-            string newText = oldText.Substring(0, column) + oldText.Substring(column + length);
-            return _replaceLine(lineNumber, oldText, newText, column);
+            return _replaceLine(startLine, oldText, newText, startCol);
         }
 
         public Point reformatLine(int lineNumber)
