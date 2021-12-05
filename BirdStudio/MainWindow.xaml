@@ -313,6 +313,7 @@
         </Style>
     </Window.Resources>
     <Window.CommandBindings>
+        <CommandBinding Command="New" Executed="NewCommand_Execute" />
         <CommandBinding Command="Open" Executed="OpenCommand_Execute" />
         <CommandBinding Command="Save" Executed="SaveCommand_Execute" />
         <CommandBinding Command="SaveAs" Executed="SaveAsCommand_Execute" />
@@ -336,6 +337,7 @@
 
         <Menu Style="{DynamicResource MenuStyle}" Grid.Row="0">
             <MenuItem Style="{DynamicResource MenuItemStyle}" Header="_File">
+                <MenuItem Header="_New" Command="New" />
                 <MenuItem Header="_Open" Command="Open" />
                 <MenuItem Header="_Save" Command="Save" />
                 <MenuItem Header="Save _As" Command="SaveAs" />

@@ -23,9 +23,11 @@ namespace BirdStudio
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const string DEFAULT_FILE_TEXT = "stage Twin Tree Village\nrerecords 0\n\n29";
+
         private LineHighlighter bgRenderer;
         private string tasFile;
-        private TAS tas = new TAS("".Split('\n').ToList());
+        private TAS tas;
         private int currentFrame = -1;
         private bool tasEditedSinceLastWatch = true;
 
@@ -46,7 +48,7 @@ namespace BirdStudio
             new Thread(new ThreadStart(TalkWithGame)).Start();
             inputEditor.TextArea.TextEntering += Editor_TextEntering;
             inputEditor.TextArea.PreviewKeyDown += Editor_KeyDown;
-            _setTasFile(null);
+            NewCommand_Execute(null, null);
         }
 
         private void TalkWithGame()
@@ -261,6 +263,16 @@ namespace BirdStudio
             else
                 Title = "Bird Studio - " + filePathToFileName(filepath);
             tasFile = filepath;
+        }
+
+        private void NewCommand_Execute(object sender, RoutedEventArgs e)
+        {
+            // TODO do you want to save your edits to the current file?
+            tas = new TAS(DEFAULT_FILE_TEXT.Split('\n').ToList());
+            _setTasFile(null);
+            tasEditedSinceLastWatch = true;
+            // set text and clear the undo stack
+            inputEditor.Text = DEFAULT_FILE_TEXT;
         }
 
         private void OpenCommand_Execute(object sender, RoutedEventArgs e)
