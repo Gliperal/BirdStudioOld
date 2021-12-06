@@ -193,11 +193,15 @@ namespace BirdStudio
                     deleteLength = 1;
                     if (e.Key == Key.Back)
                         deletePos--;
-                    if (deletePos < 0)
-                    {
-                        e.Handled = true;
-                        return;
-                    }
+                }
+                // Ingore backspace at beginning of text or delete at end of text
+                if (
+                    deletePos < 0 ||
+                    deletePos + deleteLength > inputEditor.Document.TextLength
+                )
+                {
+                    e.Handled = true;
+                    return;
                 }
                 TextLocation deleteStart = inputEditor.Document.GetLocation(deletePos);
                 TextLocation deleteEnd = inputEditor.Document.GetLocation(deletePos + deleteLength);
