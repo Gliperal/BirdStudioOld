@@ -33,7 +33,7 @@ namespace BirdStudio
         {
             lines = new List<string>();
             _stage = stage;
-            lines.Add("stage " + stage);
+            lines.Add(">stage " + stage);
             lines.Add("");
             presses.Sort(Press.compareFrames);
             HashSet<char> state = new HashSet<char>();
@@ -59,7 +59,7 @@ namespace BirdStudio
             foreach (string l in lines)
             {
                 string line = l.Trim();
-                if (line.StartsWith("stage "))
+                if (line.StartsWith(">stage "))
                     _stage = line.Substring(6);
             }
         }
@@ -90,15 +90,10 @@ namespace BirdStudio
         private static InputLine _toInputLine(string line)
         {
             line = line.Trim();
-            if (line == "" || line.StartsWith('#'))
+            if (line == "" || line.StartsWith('#') || line.StartsWith('>'))
                 return null;
             int split = line.LastIndexOfAny("0123456789".ToCharArray()) + 1;
-            // No frame number is a special case: It could be someone typing
-            // "stage" which should not count as an input line. It could also be
-            // someone deleting the frame number to type another, which should
-            // be counted, so we look for a leading comma.
-            if (split == 0 && !line.StartsWith(','))
-                return null;
+            // If no frame number is found, split will be at 0.
             string frames = line.Substring(0, split);
             string buttons = line.Substring(split).ToUpper();
             buttons = string.Join("", buttons.Split(','));
@@ -193,11 +188,11 @@ namespace BirdStudio
             for (int i = 0; i < lines.Count; i++)
             {
                 string line = lines[i].Trim();
-                if (line.StartsWith("rerecords "))
+                if (line.StartsWith(">rerecords "))
                 {
                     int rerecords;
                     if (int.TryParse(line.Substring(10).Trim(), out rerecords))
-                        lines[i] = "rerecords " + (rerecords + 1);
+                        lines[i] = ">rerecords " + (rerecords + 1);
                 }
             }
         }
@@ -257,9 +252,8 @@ namespace BirdStudio
             InputLine inputLine = _toInputLine(newText);
             if (inputLine == null)
             {
-                // worth checking if oldText was input line? (e.g. 100,L -> 10X0,L)
                 lines[lineNumber] = newText;
-                if (oldText.StartsWith("stage ") || newText.StartsWith("stage "))
+                if (oldText.StartsWith(">stage ") || newText.StartsWith(">stage "))
                     _obtainStage();
                 return new Point(lineNumber, caret);
             }
@@ -271,8 +265,22 @@ namespace BirdStudio
                 else
                     buttons.Add(c);
             }
-            lines[lineNumber] = _tasLine(inputLine.frames, buttons);
-            return new Point(lineNumber, 4);
+            string reformattedText = _tasLine(inputLine.frames, buttons);
+            lines[lineNumber] = reformattedText;
+
+            // Calculate new caret position, based on where caret appeared relative to the frame number
+            int newCaret = 0;
+            while (newCaret < reformattedText.Length && " 0".Contains(reformattedText[newCaret]))
+                newCaret++;
+            int i = 0;
+            while (i < newText.Length && " 0".Contains(newText[i]))
+                i++;
+            for (; i < caret; i++)
+                if (Char.IsDigit(newText[i]))
+                    newCaret++;
+                else
+                    break;
+            return new Point(lineNumber, newCaret);
         }
 
         // update the text, and return a Point describing where to place the caret
@@ -296,27 +304,44 @@ namespace BirdStudio
                     return new Point(lineNumber + 1, 0);
                 }
             }
+            if (_isInputLine(oldText))
+            {
+                if (textToInsert[0] != '#')
+                {
+                    // Unless we're typing numbers in the middle of the number, default cursor to position 4
+                    int endOfNumbers = oldText.LastIndexOfAny("0123456789".ToCharArray()) + 1;
+                    if (!Char.IsDigit(textToInsert[0]) || column > endOfNumbers)
+                        column = endOfNumbers;
+                }
+            }
             string newText = oldText.Insert(column, textToInsert);
             return _replaceLine(lineNumber, oldText, newText, column + textToInsert.Length);
         }
 
-        public Point removeText(int startLine, int startCol, int endLine, int endCol)
+        public Point removeText(int startLine, int startCol, int endLine, int endCol, bool reformat)
         {
             string oldText = lines[startLine];
             string newText = lines[startLine].Substring(0, startCol) + lines[endLine].Substring(endCol);
             while (endLine > startLine && startLine + 1 < lines.Count)
             {
                 lines.RemoveAt(startLine + 1);
+                // TODO If removing any stage lines, _obtainStage()
                 endLine--;
             }
-            return _replaceLine(startLine, oldText, newText, startCol);
+            if (reformat)
+                return _replaceLine(startLine, oldText, newText, startCol);
+            else
+            {
+                lines[startLine] = newText;
+                return new Point(startLine, startCol);
+            }
         }
 
-        public Point reformatLine(int lineNumber)
+        public Point reformatLine(int lineNumber, int caret)
         {
             string oldText = lines[lineNumber];
             if (_isInputLine(oldText))
-                return _replaceLine(lineNumber, oldText, oldText, -1);
+                return _replaceLine(lineNumber, oldText, oldText, caret);
             return new Point(-1, -1);
         }
     }

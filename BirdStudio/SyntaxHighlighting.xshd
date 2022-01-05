@@ -6,8 +6,8 @@
 
 	<RuleSet>
 		<Keywords color="Command">
-			<Word>stage</Word>
-			<Word>rerecords</Word>
+			<Word>>stage</Word>
+			<Word>>rerecords</Word>
 		</Keywords>
 
 		<Span color="Comment" begin="#" />

@@ -23,7 +23,7 @@ namespace BirdStudio
     /// </summary>
     public partial class MainWindow : Window
     {
-        private const string DEFAULT_FILE_TEXT = "stage Twin Tree Village\nrerecords 0\n\n29";
+        private const string DEFAULT_FILE_TEXT = ">stage Twin Tree Village\n>rerecords 0\n\n  29";
 
         private LineHighlighter bgRenderer;
         private string tasFile;
@@ -173,6 +173,7 @@ namespace BirdStudio
                 tas.toText()
             );
             ShowPlaybackFrame();
+            anticipatingTextChange = 0;
         }
 
         private void OnTasEdited(System.Drawing.Point caretPos)
@@ -205,7 +206,7 @@ namespace BirdStudio
                 }
                 TextLocation deleteStart = inputEditor.Document.GetLocation(deletePos);
                 TextLocation deleteEnd = inputEditor.Document.GetLocation(deletePos + deleteLength);
-                System.Drawing.Point caretPos = tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1);
+                System.Drawing.Point caretPos = tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1, true);
                 OnTasEdited(caretPos);
                 e.Handled = true;
             }
@@ -221,7 +222,7 @@ namespace BirdStudio
                 int deleteLength = inputEditor.SelectionLength;
                 TextLocation deleteStart = inputEditor.Document.GetLocation(deletePos);
                 TextLocation deleteEnd = inputEditor.Document.GetLocation(deletePos + deleteLength);
-                tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1);
+                tas.removeText(deleteStart.Line - 1, deleteStart.Column - 1, deleteEnd.Line - 1, deleteEnd.Column - 1, false);
                 line = inputEditor.Document.GetLineByOffset(deletePos);
                 insertAt = inputEditor.Document.GetLocation(deletePos).Column - 1;
             }
@@ -230,19 +231,27 @@ namespace BirdStudio
             e.Handled = true;
         }
 
+        private int anticipatingTextChange = -1; // TODO replace with boolean when done testing
+
         private void Editor_TextChanged(object sender, System.EventArgs e)
         {
-            // any text changes that aren't caught by the above should force a reload of the entire tas file
-            if (inputEditor.Text != tas.toText())
+            // any text changes that aren't caught by the above will be undo/redo events (I think?)
+            // therefore, force a reload of the tas file
+            if (anticipatingTextChange > 0)
             {
+                throw new Exception("Previous change not resolved.");
+                /*
                 tas = new TAS(inputEditor.Text.Split('\n').ToList());
                 // reformat just the line the caret is on
-                DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
-                System.Drawing.Point caretPos = tas.reformatLine(line.LineNumber - 1);
-                if (caretPos.X != -1)
-                    OnTasEdited(caretPos);
+                // DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
+                // int caret = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column;
+                // System.Drawing.Point caretPos = tas.reformatLine(line.LineNumber - 1, caret - 1);
+                // if (caretPos.X != -1)
+                //     OnTasEdited(caretPos);
                 ShowPlaybackFrame();
+                */
             }
+            anticipatingTextChange++;
         }
 
         private string filePathToFileName(string path)
