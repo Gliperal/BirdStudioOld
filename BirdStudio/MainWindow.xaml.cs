@@ -48,6 +48,7 @@ namespace BirdStudio
             new Thread(new ThreadStart(TalkWithGame)).Start();
             inputEditor.TextArea.TextEntering += Editor_TextEntering;
             inputEditor.TextArea.PreviewKeyDown += Editor_KeyDown;
+            inputEditor.Options.AllowScrollBelowDocument = true;
             NewCommand_Execute(null, null);
         }
 
@@ -173,7 +174,6 @@ namespace BirdStudio
                 tas.toText()
             );
             ShowPlaybackFrame();
-            anticipatingTextChange = 0;
         }
 
         private void OnTasEdited(System.Drawing.Point caretPos)
@@ -181,6 +181,7 @@ namespace BirdStudio
             OnTasEdited();
             DocumentLine caretLine = inputEditor.Document.GetLineByNumber(caretPos.X + 1);
             inputEditor.CaretOffset = caretLine.Offset + caretPos.Y;
+            inputEditor.TextArea.Caret.BringCaretToView();
         }
 
         private void Editor_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -231,27 +232,19 @@ namespace BirdStudio
             e.Handled = true;
         }
 
-        private int anticipatingTextChange = -1; // TODO replace with boolean when done testing
-
         private void Editor_TextChanged(object sender, System.EventArgs e)
         {
-            // any text changes that aren't caught by the above will be undo/redo events (I think?)
-            // therefore, force a reload of the tas file
-            if (anticipatingTextChange > 0)
-            {
-                throw new Exception("Previous change not resolved.");
-                /*
-                tas = new TAS(inputEditor.Text.Split('\n').ToList());
-                // reformat just the line the caret is on
-                // DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
-                // int caret = inputEditor.Document.GetLocation(inputEditor.CaretOffset).Column;
-                // System.Drawing.Point caretPos = tas.reformatLine(line.LineNumber - 1, caret - 1);
-                // if (caretPos.X != -1)
-                //     OnTasEdited(caretPos);
-                ShowPlaybackFrame();
-                */
-            }
-            anticipatingTextChange++;
+            // any text changes that aren't caught by the above:
+            //     undo/redo events
+            //     opening tas files
+            //     pasting from clipboard
+            // should force a reload of the tas file
+
+            // Kind of annoying that this also triggers for every regular
+            // modification of the tas file as well, but there's no real good
+            // way that I can think to fix that. :/
+            tas = new TAS(inputEditor.Text.Split('\n').ToList());
+            ShowPlaybackFrame();
         }
 
         private string filePathToFileName(string path)
