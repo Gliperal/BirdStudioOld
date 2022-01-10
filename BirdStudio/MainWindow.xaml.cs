@@ -383,5 +383,52 @@ namespace BirdStudio
         {
             _watch(tas.endingFrameForLine(inputEditor.TextArea.Caret.Line - 1));
         }
+
+        private void CommentCommand_Execute(object sender, RoutedEventArgs e)
+        {
+            int startLine, endLine;
+            if (inputEditor.SelectionLength > 0)
+            {
+                int pos = inputEditor.SelectionStart;
+                int length = inputEditor.SelectionLength;
+                TextLocation start = inputEditor.Document.GetLocation(pos);
+                TextLocation end = inputEditor.Document.GetLocation(pos + length);
+                startLine = start.Line - 1;
+                endLine = end.Line - 1;
+            }
+            else
+            {
+                DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
+                startLine = line.LineNumber - 1;
+                endLine = startLine;
+            }
+            tas.commentBlock(startLine, endLine);
+            OnTasEdited();
+        }
+
+        private void TimestampCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = currentFrame != -1;
+        }
+
+        private void TimestampCommand_Execute(object sender, RoutedEventArgs e)
+        {
+            DocumentLine line = inputEditor.Document.GetLineByOffset(inputEditor.CaretOffset);
+            int lineNumber = line.LineNumber - 1;
+            int end = line.Length;
+            string lineText = inputEditor.Text.Substring(line.Offset, line.Length);
+            if (lineText.Trim() != "")
+            {
+                tas.insertText(lineNumber, end, "\n");
+                lineNumber++;
+                end = 0;
+            }
+            int milliseconds = (currentFrame % 48) * 1000 / 48;
+            int seconds = (currentFrame / 48) % 60;
+            int minutes = currentFrame / (48 * 60);
+            string timestamp = String.Format("# {0} ({1}:{2:D2}.{3:D3})", currentFrame, minutes, seconds, milliseconds);
+            System.Drawing.Point caretPos = tas.insertText(lineNumber, end, timestamp);
+            OnTasEdited(caretPos);
+        }
     }
 }

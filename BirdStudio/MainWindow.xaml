@@ -327,6 +327,15 @@
             Executed="WatchToCursor_Execute"
             CanExecute="WatchFromStart_CanExecute"
         />
+        <CommandBinding
+            Command="commands:CustomCommands.Comment"
+            Executed="CommentCommand_Execute"
+        />
+        <CommandBinding
+            Command="commands:CustomCommands.AddTimestamp"
+            Executed="TimestampCommand_Execute"
+            CanExecute="TimestampCommand_CanExecute"
+        />
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -341,6 +350,10 @@
                 <MenuItem Header="_Open" Command="Open" />
                 <MenuItem Header="_Save" Command="Save" />
                 <MenuItem Header="Save _As" Command="SaveAs" />
+            </MenuItem>
+            <MenuItem Style="{DynamicResource MenuItemStyle}" Header="_Edit">
+                <MenuItem Header="_Comment Line(s)" Command="commands:CustomCommands.Comment" />
+                <MenuItem Header="Insert _Timestamp" Command="commands:CustomCommands.AddTimestamp" />
             </MenuItem>
             <MenuItem Style="{DynamicResource MenuItemStyle}" Header="_Bird">
                 <MenuItem Header="Watch from _Start" Command="commands:CustomCommands.WatchFromStart" />

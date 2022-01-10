@@ -33,5 +33,25 @@ namespace BirdStudio.Commands
                 new KeyGesture(Key.D, ModifierKeys.Control)
             }
         );
+
+        public static RoutedUICommand Comment = new RoutedUICommand(
+            "Comment/Uncomment Lines",
+            "ToggleComment",
+            typeof(CustomCommands),
+            new InputGestureCollection()
+            {
+                new KeyGesture(Key.OemQuestion, ModifierKeys.Control)
+            }
+        );
+
+        public static RoutedUICommand AddTimestamp = new RoutedUICommand(
+            "Add Timestamp",
+            "Timestamp",
+            typeof(CustomCommands),
+            new InputGestureCollection()
+            {
+                new KeyGesture(Key.T, ModifierKeys.Control)
+            }
+        );
     }
 }

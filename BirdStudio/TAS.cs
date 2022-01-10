@@ -60,7 +60,7 @@ namespace BirdStudio
             {
                 string line = l.Trim();
                 if (line.StartsWith(">stage "))
-                    _stage = line.Substring(6);
+                    _stage = line.Substring(7);
             }
         }
 
@@ -343,6 +343,27 @@ namespace BirdStudio
             if (_isInputLine(oldText))
                 return _replaceLine(lineNumber, oldText, oldText, caret);
             return new Point(-1, -1);
+        }
+
+        public void commentBlock(int startLine, int endLine)
+        {
+            bool uncomment = true;
+            for (int i = startLine; i <= endLine; i++)
+                if (!lines[i].Trim().StartsWith('#'))
+                    uncomment = false;
+            if (uncomment)
+            {
+                for (int i = startLine; i <= endLine; i++)
+                {
+                    int commentStart = lines[i].IndexOf('#');
+                    lines[i] = lines[i].Substring(commentStart + 1);
+                }
+            }
+            else
+            {
+                for (int i = startLine; i <= endLine; i++)
+                    lines[i] = "#" + lines[i];
+            }
         }
     }
 }
