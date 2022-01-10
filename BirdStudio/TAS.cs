@@ -309,7 +309,10 @@ namespace BirdStudio
                 if (textToInsert[0] != '#')
                 {
                     // Unless we're typing numbers in the middle of the number, default cursor to position 4
-                    int endOfNumbers = oldText.LastIndexOfAny("0123456789".ToCharArray()) + 1;
+                    int endOfNumbers = 0;
+                    for (; endOfNumbers < oldText.Length; endOfNumbers++)
+                        if (!" \t0123456789".Contains(oldText[endOfNumbers]))
+                            break;
                     if (!Char.IsDigit(textToInsert[0]) || column > endOfNumbers)
                         column = endOfNumbers;
                 }

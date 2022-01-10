@@ -423,7 +423,7 @@ namespace BirdStudio
                 lineNumber++;
                 end = 0;
             }
-            int milliseconds = (currentFrame % 48) * 1000 / 48;
+            int milliseconds = (int) Math.Round((currentFrame % 48) * 1000.0 / 48.0);
             int seconds = (currentFrame / 48) % 60;
             int minutes = currentFrame / (48 * 60);
             string timestamp = String.Format("# {0} ({1}:{2:D2}.{3:D3})", currentFrame, minutes, seconds, milliseconds);
