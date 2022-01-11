@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:BirdStudio"
         xmlns:commands="clr-namespace:BirdStudio.Commands"
         mc:Ignorable="d"
-        Title="birb" Height="800" Width="300">
+        Title="birb" Height="800" Width="300"
+        Icon="Icon.ico">
     <Window.Resources>
         <SolidColorBrush x:Key="Menu.Static.Background" />
         <Style x:Key="MenuStyle" TargetType="{x:Type Menu}">
