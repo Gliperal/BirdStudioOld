@@ -53,5 +53,25 @@ namespace BirdStudio.Commands
                 new KeyGesture(Key.T, ModifierKeys.Control)
             }
         );
+
+        public static RoutedUICommand StepFrame = new RoutedUICommand(
+            "Frame Advance",
+            "StepFrame",
+            typeof(CustomCommands),
+            new InputGestureCollection()
+            {
+                new KeyGesture(Key.OemOpenBrackets)
+            }
+        );
+
+        public static RoutedUICommand PlayPause = new RoutedUICommand(
+            "Play / Pause",
+            "PlayPause",
+            typeof(CustomCommands),
+            new InputGestureCollection()
+            {
+                new KeyGesture(Key.OemCloseBrackets)
+            }
+        );
     }
 }

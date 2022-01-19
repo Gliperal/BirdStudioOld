@@ -384,6 +384,16 @@ namespace BirdStudio
             _watch(tas.endingFrameForLine(inputEditor.TextArea.Caret.Line - 1));
         }
 
+        private void PlayPause_Execute(object sender, RoutedEventArgs e)
+        {
+            TcpManager.sendCommand("PlayPause");
+        }
+
+        private void StepFrame_Execute(object sender, RoutedEventArgs e)
+        {
+            TcpManager.sendCommand("StepFrame");
+        }
+
         private void CommentCommand_Execute(object sender, RoutedEventArgs e)
         {
             int startLine, endLine;

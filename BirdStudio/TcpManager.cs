@@ -96,6 +96,13 @@ namespace BirdStudio
             }
         }
 
+        public static void sendCommand(string command)
+        {
+            if (!tcp.Connected)
+                return;
+            Util.WriteString(stream, command);
+        }
+
         public static void sendLoadReplayCommand(string levelName, string replayBuffer, int breakpoint)
         {
             if (!tcp.Connected)
