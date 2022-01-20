@@ -44,12 +44,33 @@ namespace BirdStudio
                     inputEditor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
                 }
             }
-            SetColorScheme(ColorScheme.LightMode());
+            if (UserPreferences.get("dark mode", "false") == "true")
+            {
+                SetColorScheme(ColorScheme.DarkMode());
+                darkModeMenuItem.IsChecked = true;
+            }
+            else
+            {
+                SetColorScheme(ColorScheme.LightMode());
+            }
+            if (UserPreferences.get("show help", "false") == "true")
+                buttonHelper.Visibility = Visibility.Visible;
             new Thread(new ThreadStart(TalkWithGame)).Start();
             inputEditor.TextArea.TextEntering += Editor_TextEntering;
             inputEditor.TextArea.PreviewKeyDown += Editor_KeyDown;
             inputEditor.Options.AllowScrollBelowDocument = true;
             NewCommand_Execute(null, null);
+
+            // TODO custom keybindings
+            // playPauseCommandBinding.Command = new RoutedUICommand(
+            //     "Play / Pause",
+            //     "PlayPause",
+            //     typeof(Commands.CustomCommands),
+            //     new InputGestureCollection()
+            //     {
+            //         new KeyGesture(Key.OemMinus)
+            //     }
+            // );
         }
 
         private void TalkWithGame()
@@ -386,7 +407,7 @@ namespace BirdStudio
 
         private void PlayPause_Execute(object sender, RoutedEventArgs e)
         {
-            TcpManager.sendCommand("PlayPause");
+            TcpManager.sendCommand("TogglePause");
         }
 
         private void StepFrame_Execute(object sender, RoutedEventArgs e)

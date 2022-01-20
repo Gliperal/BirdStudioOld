@@ -329,11 +329,13 @@
             CanExecute="WatchFromStart_CanExecute"
         />
         <CommandBinding
+            x:Name="playPauseCommandBinding"
             Command="commands:CustomCommands.PlayPause"
             Executed="PlayPause_Execute"
             CanExecute="WatchFromStart_CanExecute"
         />
         <CommandBinding
+            x:Name="stepFrameCommandBinding"
             Command="commands:CustomCommands.StepFrame"
             Executed="StepFrame_Execute"
             CanExecute="WatchFromStart_CanExecute"
@@ -373,7 +375,7 @@
                 <MenuItem Header="_Frame Advance" Command="commands:CustomCommands.StepFrame" />
             </MenuItem>
             <MenuItem Style="{DynamicResource MenuItemStyle}" Header="_Preferences">
-                <MenuItem Header="_Dark Mode" IsCheckable="True" Checked="Menu_DarkMode" Unchecked="Menu_LightMode" />
+                <MenuItem Name="darkModeMenuItem" Header="_Dark Mode" IsCheckable="True" Checked="Menu_DarkMode" Unchecked="Menu_LightMode" />
                 <MenuItem Header="_Show/Hide Help" Click="Menu_ToggleHelp" />
             </MenuItem>
         </Menu>
