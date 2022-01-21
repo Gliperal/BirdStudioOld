@@ -168,18 +168,26 @@ namespace BirdStudio
         private void Menu_ToggleHelp(object sender, RoutedEventArgs e)
         {
             if (buttonHelper.Visibility == Visibility.Visible)
+            {
                 buttonHelper.Visibility = Visibility.Collapsed;
+                UserPreferences.set("show help", "false");
+            }
             else
+            {
                 buttonHelper.Visibility = Visibility.Visible;
+                UserPreferences.set("show help", "true");
+            }
         }
 
         private void Menu_LightMode(object sender, RoutedEventArgs e)
         {
+            UserPreferences.set("dark mode", "false");
             SetColorScheme(ColorScheme.LightMode());
         }
 
         private void Menu_DarkMode(object sender, RoutedEventArgs e)
         {
+            UserPreferences.set("dark mode", "true");
             SetColorScheme(ColorScheme.DarkMode());
         }
 

@@ -4,74 +4,60 @@ namespace BirdStudio.Commands
 {
     public class CustomCommands
     {
-        public static RoutedUICommand WatchFromStart = new RoutedUICommand(
+        private static RoutedUICommand makeCommand(string text, string name, KeyGesture defaultInput)
+        {
+            KeyGesture input = UserPreferences.getKeyBinding(name, defaultInput);
+            return new RoutedUICommand(
+                text,
+                name,
+                typeof(CustomCommands),
+                new InputGestureCollection()
+                {
+                    input
+                }
+            );
+        }
+
+        public static RoutedUICommand WatchFromStart = makeCommand(
             "Watch from Start",
             "WatchFromStart",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.W, ModifierKeys.Control)
-            }
+            new KeyGesture(Key.W, ModifierKeys.Control)
         );
 
-        public static RoutedUICommand WatchToCursor = new RoutedUICommand(
+        public static RoutedUICommand WatchToCursor = makeCommand(
             "Watch to Cursor",
             "WatchToCursor",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.Q, ModifierKeys.Control)
-            }
+            new KeyGesture(Key.Q, ModifierKeys.Control)
         );
 
-        public static RoutedUICommand ToggleDarkMode = new RoutedUICommand(
-            "Toggle Dark Mode",
-            "ToggleDarkMode",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.D, ModifierKeys.Control)
-            }
-        );
+//        public static RoutedUICommand ToggleDarkMode = makeCommand(
+//            "Toggle Dark Mode",
+//            "ToggleDarkMode",
+//            new KeyGesture(Key.D, ModifierKeys.Control)
+//        );
 
-        public static RoutedUICommand Comment = new RoutedUICommand(
+        public static RoutedUICommand Comment = makeCommand(
             "Comment/Uncomment Lines",
             "ToggleComment",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.OemQuestion, ModifierKeys.Control)
-            }
+            new KeyGesture(Key.OemQuestion, ModifierKeys.Control)
         );
 
-        public static RoutedUICommand AddTimestamp = new RoutedUICommand(
+        public static RoutedUICommand AddTimestamp = makeCommand(
             "Add Timestamp",
             "Timestamp",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.T, ModifierKeys.Control)
-            }
+            new KeyGesture(Key.T, ModifierKeys.Control)
         );
 
-        public static RoutedUICommand StepFrame = new RoutedUICommand(
+        public static RoutedUICommand StepFrame = makeCommand(
             "Frame Advance",
             "StepFrame",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.OemOpenBrackets)
-            }
+            new KeyGesture(Key.OemOpenBrackets)
         );
 
-        public static RoutedUICommand PlayPause = new RoutedUICommand(
+        public static RoutedUICommand PlayPause = makeCommand(
             "Play / Pause",
             "PlayPause",
-            typeof(CustomCommands),
-            new InputGestureCollection()
-            {
-                new KeyGesture(Key.OemCloseBrackets)
-            }
+            new KeyGesture(Key.OemCloseBrackets)
         );
     }
 }
